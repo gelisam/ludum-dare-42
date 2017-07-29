@@ -53,9 +53,9 @@ window.onload = function() {
   const initialLevel = [
     "#Oooo#",
     ".R....",
-    "....B.",
-    "##o...",
-    "....B.",
+    "...B..",
+    "##o.B.",
+    "S....B",
     "......",
   ];
 
