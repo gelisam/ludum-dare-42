@@ -75,12 +75,16 @@ window.onload = function() {
   const fadeTo = document.getElementById("fadeTo");
 
   function gameOver() {
+    fadeTo.classList.remove("normal");
+    fadeTo.classList.remove("dark");
     fadeTo.classList.add("black");
-    fadeTo.addEventListener("animationend", gameOver2);
+    fadeTo.addEventListener("transitionend", gameOver2);
   }
   function gameOver2() {
-    fadeTo.removeEventListener("animationend", gameOver2);
+    console.log("reset");
+    fadeTo.removeEventListener("transitionend", gameOver2);
     fadeTo.classList.remove("black");
+    fadeTo.classList.remove("normal");
     reset();
   }
 
@@ -202,10 +206,18 @@ window.onload = function() {
       if (cellAt(above) === "o") {
         writeCell(above, "O");
         writeCell(player, "R");
+
         energy = maxEnergy;
+        fadeTo.classList.remove("dark");
+        fadeTo.classList.add("normal");
       } else {
         writeCell(player, "r");
-        if (energy === 0) gameOver();
+        if (energy === 0) {
+          gameOver();
+        } else {
+          fadeTo.classList.remove("normal");
+          fadeTo.classList.add("dark");
+        }
       }
     }
   };

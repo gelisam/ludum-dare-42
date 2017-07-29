@@ -24,18 +24,22 @@
         width: 100%;
         height: 100%;
       }
-      @keyframes fadeToBlack {
-        from {background-color: transparent;}
-        to {background-color: black;}
+      .normal {
+        background-color: transparent;
+        transition: background-color 0.5s;
+      }
+      .dark {
+        background-color: rgba(0, 0, 0, 0.5);
+        transition: background-color 0.5s;
       }
       .black {
-        animation-name: fadeToBlack;
-        animation-duration: 4s;
+        background-color: black;
+        transition: background-color 1s;
       }
     </style>
     <script src="main.js"></script>
   </head>
   <body>
-    <div id="fadeTo"></div>
+    <div id="fadeTo" class="normal"></div>
   </body>
 </html>
