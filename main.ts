@@ -194,6 +194,11 @@ window.onload = function() {
 
     player = pos;
 
+    if (cellAt(player) == "B") {
+      maxEnergy += 2;
+      energy += 2;
+    }
+
     {
       const above = add(player, dirN);
       if (cellAt(above) === "o") {
