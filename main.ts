@@ -1,3 +1,18 @@
+type Nothing = {
+  "ctor": "Nothing",
+}
+type Just<A> = {
+  "ctor": "Just",
+  "value": A,
+}
+type Maybe<A> = Nothing | Just<A>;
+
+const Nothing: Nothing = {"ctor": "Nothing"};
+function Just<A>(value: A): Just<A> {
+  return {"ctor": "Just", value: value};
+}
+
+
 type Images = HTMLElement[][];
 
 function createTable(width: number, height: number) {
@@ -26,6 +41,19 @@ function createTable(width: number, height: number) {
 }
 
 
+type Pos = {"x": number, "y": number};
+
+const dirN = {"x":  0, "y": -1};
+const dirE = {"x":  1, "y":  0};
+const dirW = {"x": -1, "y":  0};
+const dirS = {"x":  0, "y":  1};
+
+function add(pos1: Pos, pos2: Pos) {
+  return {"x": pos1.x + pos2.x, "y": pos1.y+pos2.y};
+}
+
+
+
 type Cell = string;
 type Level = string[];
 
@@ -42,19 +70,27 @@ function srcForCell(cell: Cell) {
 }
 
 function loadLevel(width: number, height: number, images: Images, level: Level) {
+  let player: Maybe<Pos> = Nothing;
+
   for (let y = 0; y<height; ++y) {
     for (let x = 0; x<width; ++x) {
-      images[y][x].setAttribute("src", srcForCell(level[y][x]));
+      const cell = level[y][x];
+      if (cell == "R" || cell == "r") player = Just({"x": x, "y": y});
+      images[y][x].setAttribute("src", srcForCell(cell));
     }
   }
+
+  return player;
 }
 
 window.onload = function() {
   const width = 6;
   const height = 3;
-  loadLevel(width, height, createTable(width, height), [
+  let player = loadLevel(width, height, createTable(width, height), [
     "#O##o#",
     ".R....",
     "......",
   ]);
+
+  console.log(player);
 };
