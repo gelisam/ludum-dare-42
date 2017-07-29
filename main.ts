@@ -51,10 +51,10 @@ window.onload = function() {
   const height = 6;
 
   const initialLevel = [
-    "#O##o#",
+    "#Oooo#",
     ".R....",
-    "......",
-    "#o#...",
+    "....B.",
+    "##o...",
     "....B.",
     "......",
   ];
@@ -179,8 +179,8 @@ window.onload = function() {
   }
 
 
-  const initialMaxEnergy = 6;
-  const initialEnergy = 6;
+  const initialMaxEnergy = 0;
+  const initialEnergy = 0;
   let maxEnergy = initialMaxEnergy;
   let energy = initialEnergy;
 
