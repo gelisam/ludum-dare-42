@@ -255,7 +255,7 @@ window.onload = function() {
 
     if (cellAt(player) === "B") {
       maxEnergy += 2;
-      energy += 3;
+      energy = maxEnergy;
     }
 
     {
