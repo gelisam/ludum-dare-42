@@ -21,7 +21,7 @@
         height: 48px;
       }
 
-      #energy {
+      #batteryBank {
         position: absolute;
         top: 20px;
         right: 20px;
@@ -34,8 +34,11 @@
         border-radius: 10px;
       }
 
-      #energy img {
+      #batteryBank img {
         padding: 2px;
+      }
+      #batteryBank.empty {
+        display: none;
       }
 
       #fadeTo {
@@ -66,7 +69,7 @@
   </head>
   <body>
     <div id="gamegrid"></div>
-    <div id="energy"><img src="images/empty-battery.png"/><img src="images/half-battery.png"/><img src="images/full-battery.png"/></div>
+    <div id="batteryBank" class="empty"></div>
     <div id="fadeTo" class="normal"></div>
   </body>
 </html>

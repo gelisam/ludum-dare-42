@@ -184,6 +184,58 @@ window.onload = function() {
   let maxEnergy = initialMaxEnergy;
   let energy = initialEnergy;
 
+  const batteryBank = getElementById("batteryBank");
+  let virtualBatteryBank: number[] = [];
+
+  function displayEnergy() {
+    const targetBatteryBank: number[] = [];
+    let energyLeft = energy;
+    for (let i = 0; i<maxEnergy; i+=2) {
+      if (energyLeft >= 2) {
+        targetBatteryBank.unshift(2);
+        energyLeft -= 2;
+      } else if (energyLeft >= 1) {
+        targetBatteryBank.unshift(1);
+        energyLeft -= 1;
+      } else {
+        targetBatteryBank.unshift(0);
+      }
+    }
+
+    let children = batteryBank.children;
+    let n = Math.max(...[virtualBatteryBank.length, targetBatteryBank.length, children.length]);
+    for (let i = 0; i<n; ++i) {
+      let child: Element;
+      if (i < children.length) {
+        child = children[i];
+      } else {
+        child = document.createElement("IMG");
+        batteryBank.appendChild(child);
+      }
+
+      if (i < targetBatteryBank.length) {
+        const actual = virtualBatteryBank[i] || -1;
+        const target = targetBatteryBank[i];
+
+        if (actual != target) {
+          if (target === 0) child.setAttribute("src", "images/empty-battery.png");
+          if (target === 1) child.setAttribute("src", "images/half-battery.png");
+          if (target === 2) child.setAttribute("src", "images/full-battery.png");
+        }
+      } else {
+        batteryBank.removeChild(child);
+      }
+    }
+
+    if (energy > 0) {
+      batteryBank.classList.remove("empty");
+    }
+
+    virtualBatteryBank = targetBatteryBank;
+  }
+
+  displayEnergy();
+
   function movePlayer(dir: Pos) {
     const pos = add(player, dir);
     if (isSolid(cellAt(pos))) return;
@@ -201,7 +253,7 @@ window.onload = function() {
 
     player = pos;
 
-    if (cellAt(player) == "B") {
+    if (cellAt(player) === "B") {
       maxEnergy += 2;
       energy += 2;
     }
@@ -234,6 +286,8 @@ window.onload = function() {
         }
       }
     }
+
+    displayEnergy();
   };
 
   document.onkeydown = function(e) {
@@ -246,6 +300,8 @@ window.onload = function() {
   function reset() {
     maxEnergy = initialMaxEnergy;
     energy = initialEnergy;
+    displayEnergy();
+    if (energy == 0) batteryBank.classList.add("empty");
 
     const maybePlayer = loadLevel();
     if (maybePlayer.ctor === "Nothing") {
