@@ -13,6 +13,13 @@ function Just<A>(value: A): Just<A> {
 }
 
 
+function getElementById(id: string): HTMLElement {
+  const element = document.getElementById(id);
+  if (!element) throw ReferenceError("element with id " + id + " not found");
+  return element;
+}
+
+
 type Pos = {"x": number, "y": number};
 
 const dirN = {"x":  0, "y": -1};
@@ -72,7 +79,7 @@ window.onload = function() {
   let level = copyLevel();
 
 
-  const fadeTo = document.getElementById("fadeTo");
+  const fadeTo = getElementById("fadeTo");
 
   function gameOver() {
     fadeTo.removeEventListener("transitionend", gameOver);
@@ -105,7 +112,7 @@ window.onload = function() {
       images.push(image_row)
     }
 
-    document.getElementById("gamegrid").appendChild(table);
+    getElementById("gamegrid").appendChild(table);
     return images;
   }
 

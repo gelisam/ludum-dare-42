@@ -2,4 +2,4 @@
 set -e
 
 clear
-tsc --noImplicitAny main.ts
+tsc --strict main.ts
