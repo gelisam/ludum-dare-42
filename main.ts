@@ -134,14 +134,23 @@ window.onload = function() {
 
 
   function srcForCell(cell: Cell) {
-    if (cell === "B") return "images/battery.png";
-    if (cell === ".") return "images/floor.png";
-    if (cell === "O") return "images/plugged-outlet.png";
-    if (cell === "R") return "images/plugged-robot.png";
-    if (cell === "S") return "images/solar.png";
-    if (cell === "o") return "images/unplugged-outlet.png";
-    if (cell === "r") return "images/unplugged-robot.png";
-    if (cell === "#") return "images/wall.png";
+    if (areLightsOut) {
+      if (cell === "B") return "images/dark-battery.png";
+      if (cell === ".") return "images/dark-floor.png";
+      if (cell === "s") return "images/dark-solar-robot.png";
+      if (cell === "o") return "images/dark-outlet.png";
+      if (cell === "#") return "images/dark-wall.png";
+    } else {
+      if (cell === "B") return "images/battery.png";
+      if (cell === ".") return "images/floor.png";
+      if (cell === "O") return "images/plugged-outlet.png";
+      if (cell === "R") return "images/plugged-robot.png";
+      if (cell === "S") return "images/solar.png";
+      if (cell === "s") return "images/solar-robot.png";
+      if (cell === "o") return "images/unplugged-outlet.png";
+      if (cell === "r") return "images/unplugged-robot.png";
+      if (cell === "#") return "images/wall.png";
+    }
 
     return "";
   }
@@ -149,6 +158,15 @@ window.onload = function() {
   function writeCell(pos: Pos, cell: Cell) {
     level[pos.y][pos.x] = cell;
     images[pos.y][pos.x].setAttribute("src", srcForCell(cell));
+  }
+
+  function refreshLevel() {
+    for (let y = 0; y<height; ++y) {
+      for (let x = 0; x<width; ++x) {
+        const pos = {"x": x, "y": y};
+        writeCell(pos, cellAt(pos));
+      }
+    }
   }
 
   function loadLevel() {
@@ -179,8 +197,12 @@ window.onload = function() {
   }
 
 
+  const initialHasSolarPanel = false;
+  const initialAreLightsOut = false;
   const initialMaxEnergy = 0;
   const initialEnergy = 0;
+  let hasSolarPanel = initialHasSolarPanel;
+  let areLightsOut = initialAreLightsOut;
   let maxEnergy = initialMaxEnergy;
   let energy = initialEnergy;
 
@@ -257,10 +279,16 @@ window.onload = function() {
       maxEnergy += 2;
       energy = maxEnergy;
     }
+    if (cellAt(player) === "S") {
+      hasSolarPanel = true;
+      areLightsOut = true;
+      refreshLevel();
+      energy = maxEnergy;
+    }
 
     {
       const above = add(player, dirN);
-      if (cellAt(above) === "o") {
+      if (cellAt(above) === "o" && !hasSolarPanel) {
         writeCell(above, "O");
         writeCell(player, "R");
 
@@ -270,7 +298,7 @@ window.onload = function() {
         fadeTo.classList.remove("darkish");
         fadeTo.classList.add("normal");
       } else {
-        writeCell(player, "r");
+        writeCell(player, hasSolarPanel ? "s" : "r");
         if (energy > 2) {
           fadeTo.classList.remove("normal");
           fadeTo.classList.add("darkish");
@@ -305,10 +333,12 @@ window.onload = function() {
   }
 
   function reset() {
+    hasSolarPanel = initialHasSolarPanel;
+    areLightsOut = initialAreLightsOut;
     maxEnergy = initialMaxEnergy;
     energy = initialEnergy;
     displayEnergy();
-    if (energy == 0) batteryBank.classList.add("empty");
+    if (energy === 0) batteryBank.classList.add("empty");
 
     const maybePlayer = loadLevel();
     if (maybePlayer.ctor === "Nothing") {
