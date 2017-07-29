@@ -75,14 +75,7 @@ window.onload = function() {
   const fadeTo = document.getElementById("fadeTo");
 
   function gameOver() {
-    fadeTo.classList.remove("normal");
-    fadeTo.classList.remove("dark");
-    fadeTo.classList.add("black");
-    fadeTo.addEventListener("transitionend", gameOver2);
-  }
-  function gameOver2() {
-    console.log("reset");
-    fadeTo.removeEventListener("transitionend", gameOver2);
+    fadeTo.removeEventListener("transitionend", gameOver);
     fadeTo.classList.remove("black");
     fadeTo.classList.remove("normal");
     reset();
@@ -179,8 +172,8 @@ window.onload = function() {
   }
 
 
-  const initialMaxEnergy = 3;
-  const initialEnergy = 3;
+  const initialMaxEnergy = 6;
+  const initialEnergy = 6;
   let maxEnergy = initialMaxEnergy;
   let energy = initialEnergy;
 
@@ -209,14 +202,23 @@ window.onload = function() {
 
         energy = maxEnergy;
         fadeTo.classList.remove("dark");
+        fadeTo.classList.remove("darkish");
         fadeTo.classList.add("normal");
       } else {
         writeCell(player, "r");
-        if (energy === 0) {
-          gameOver();
+        if (energy > 3) {
+          fadeTo.classList.remove("normal");
+          fadeTo.classList.add("darkish");
+        } else if (energy > 0) {
+          fadeTo.classList.remove("normal");
+          fadeTo.classList.remove("darkish");
+          fadeTo.classList.add("dark");
         } else {
           fadeTo.classList.remove("normal");
-          fadeTo.classList.add("dark");
+          fadeTo.classList.remove("darkish");
+          fadeTo.classList.remove("dark");
+          fadeTo.classList.add("black");
+          fadeTo.addEventListener("transitionend", gameOver);
         }
       }
     }
