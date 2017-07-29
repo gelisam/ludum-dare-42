@@ -88,6 +88,23 @@ window.onload = function() {
     reset();
   }
 
+  let lightOutCount = 0;
+  function lightsOut() {
+    lightOutCount = 4;
+    toggleLightsOut();
+  }
+  function toggleLightsOut() {
+    if (lightOutCount > 0) --lightOutCount;
+    areLightsOut = !areLightsOut;
+    refreshLevel();
+
+    if (lightOutCount == 0 && areLightsOut) {
+      withinCutscene = false;
+    } else {
+      window.setTimeout(toggleLightsOut, 120);
+    }
+  }
+
 
   type Images = HTMLElement[][];
 
@@ -281,8 +298,7 @@ window.onload = function() {
       energy = maxEnergy;
     } else if (cellAt(player) === "S") {
       hasSolarPanel = true;
-      areLightsOut = true;
-      refreshLevel();
+      lightsOut();
       energy = maxEnergy;
     } else {
       --energy;
