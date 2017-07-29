@@ -88,11 +88,14 @@ window.onload = function() {
     reset();
   }
 
+
   let lightOutCount = 0;
+
   function lightsOut() {
     lightOutCount = 4;
     toggleLightsOut();
   }
+
   function toggleLightsOut() {
     if (lightOutCount > 0) --lightOutCount;
     areLightsOut = !areLightsOut;
@@ -102,6 +105,42 @@ window.onload = function() {
       withinCutscene = false;
     } else {
       window.setTimeout(toggleLightsOut, 120);
+    }
+  }
+
+
+  let thoughtBox = getElementById("thoughtBox");
+
+  function displayThoughts(thoughts: string) {
+    if (thoughts === "") {
+      thoughtBox.classList.add("empty");
+    } else {
+      thoughtBox.textContent = thoughts;
+      thoughtBox.classList.remove("empty");
+    }
+  }
+
+
+  let thoughtsCount = 0;
+  let thoughtsTotal = 0;
+  let completeThoughts = "";
+
+  function animateThoughts(thoughts: string) {
+    withinCutscene = true;
+    thoughtsCount = 0;
+    thoughtsTotal = thoughts.length;
+    completeThoughts = thoughts;
+    advanceThoughts();
+  }
+
+  function advanceThoughts() {
+    ++thoughtsCount;
+    displayThoughts(completeThoughts.slice(0, thoughtsCount));
+
+    if (thoughtsCount >= thoughtsTotal) {
+      withinCutscene = false;
+    } else {
+      window.setTimeout(advanceThoughts, 50);
     }
   }
 
@@ -276,6 +315,7 @@ window.onload = function() {
   }
 
   displayEnergy();
+  animateThoughts("I'm a robot without a battery. If I walk even one step away from this power outlet, I'll unplug and die. Unless, of course, I plug into another outlet!");
 
   function movePlayer(dir: Pos) {
     if (withinCutscene) return;

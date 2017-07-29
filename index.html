@@ -37,7 +37,7 @@
       #batteryBank img {
         padding: 2px;
       }
-      #batteryBank.empty {
+      .empty {
         display: none;
       }
 
@@ -68,6 +68,14 @@
         background-color: black;
         transition: background-color 1s;
       }
+
+      #thoughtBox {
+        background-color: #c9d0de;
+        border: 4px solid #6c87bf;
+        border-radius: 20px;
+        padding: 20px;
+        margin: 20px;
+      }
     </style>
     <script src="main.js"></script>
   </head>
@@ -75,5 +83,6 @@
     <div id="gamegrid"></div>
     <div id="batteryBank" class="empty"></div>
     <div id="fadeTo" class="normal"></div>
+    <div id="thoughtBox" class="empty"></div>
   </body>
 </html>
