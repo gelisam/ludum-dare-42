@@ -25,10 +25,64 @@ function add(pos1: Pos, pos2: Pos) {
 }
 
 
+type Cell = string;
+type Level = Cell[][];
+
+function levelRow(s: String): Cell[] {
+  let row: Cell[] = [];
+
+  for (let x = 0; x<s.length; ++x) {
+    row.push(s[x]);
+  }
+
+  return row;
+}
+
 
 window.onload = function() {
   const width = 6;
-  const height = 3;
+  const height = 6;
+
+  const initialLevel = [
+    "#O##o#",
+    ".R....",
+    "......",
+    "#o#...",
+    "....B.",
+    "......",
+  ];
+
+
+  function copyLevel() {
+    let copiedLevel: Level = [];
+
+    for (let y = 0; y<height; ++y) {
+      let copiedRow: Cell[] = [];
+
+      for (let x = 0; x<width; ++x) {
+        copiedRow.push(initialLevel[y][x]);
+      }
+
+      copiedLevel.push(copiedRow);
+    }
+
+    return copiedLevel;
+  }
+
+  let level = copyLevel();
+
+
+  const fadeTo = document.getElementById("fadeTo");
+
+  function gameOver() {
+    fadeTo.classList.add("black");
+    fadeTo.addEventListener("animationend", gameOver2);
+  }
+  function gameOver2() {
+    fadeTo.removeEventListener("animationend", gameOver2);
+    fadeTo.classList.remove("black");
+    reset();
+  }
 
 
   type Images = HTMLElement[][];
@@ -60,25 +114,6 @@ window.onload = function() {
 
   const images = createTable();
 
-
-  type Cell = string;
-  type Level = Cell[][];
-
-  function levelRow(s: String): Cell[] {
-    let row: Cell[] = [];
-
-    for (let x = 0; x<width; ++x) {
-      row.push(s[x]);
-    }
-
-    return row;
-  }
-
-  const level = [
-    levelRow("#O##o#"),
-    levelRow(".R...."),
-    levelRow("......"),
-  ];
 
   function cellAt(pos: Pos) {
     if (pos.x < 0) return "#";
@@ -118,7 +153,7 @@ window.onload = function() {
     for (let y = 0; y<height; ++y) {
       for (let x = 0; x<width; ++x) {
         const pos = {"x": x, "y": y};
-        const cell = cellAt(pos);
+        const cell = initialLevel[pos.y][pos.x];
 
         if (cell === "R" || cell === "r") player = Just({"x": x, "y": y});
         writeCell(pos, cell);
@@ -130,22 +165,32 @@ window.onload = function() {
 
 
   let maybePlayer = loadLevel();
+
   let player: Pos;
-  if (maybePlayer.ctor == "Nothing") {
+  if (maybePlayer.ctor === "Nothing") {
     console.error("level has no start position");
     return;
   } else {
     player = maybePlayer.value;
   }
 
+
+  const initialMaxEnergy = 3;
+  const initialEnergy = 3;
+  let maxEnergy = initialMaxEnergy;
+  let energy = initialEnergy;
+
   function movePlayer(dir: Pos) {
     const pos = add(player, dir);
     if (isSolid(cellAt(pos))) return;
 
+    if (energy === 0) return;
+    --energy;
+
     writeCell(player, ".");
     {
       const above = add(player, dirN);
-      if (cellAt(above) == "O") {
+      if (cellAt(above) === "O") {
         writeCell(above, "o");
       }
     }
@@ -154,11 +199,13 @@ window.onload = function() {
 
     {
       const above = add(player, dirN);
-      if (cellAt(above) == "o") {
+      if (cellAt(above) === "o") {
         writeCell(above, "O");
         writeCell(player, "R");
+        energy = maxEnergy;
       } else {
         writeCell(player, "r");
+        if (energy === 0) gameOver();
       }
     }
   };
@@ -168,5 +215,18 @@ window.onload = function() {
     else if (e.code === "ArrowRight") movePlayer(dirE);
     else if (e.code === "ArrowLeft" ) movePlayer(dirW);
     else if (e.code === "ArrowDown" ) movePlayer(dirS);
+  }
+
+  function reset() {
+    maxEnergy = initialMaxEnergy;
+    energy = initialEnergy;
+
+    const maybePlayer = loadLevel();
+    if (maybePlayer.ctor === "Nothing") {
+      console.error("we already checked this on startup, should never happen");
+      return;
+    } else {
+      player = maybePlayer.value;
+    }
   }
 };
