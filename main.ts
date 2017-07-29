@@ -58,14 +58,14 @@ type Cell = string;
 type Level = string[];
 
 function srcForCell(cell: Cell) {
-  if (cell == "B") return "images/battery.png";
-  if (cell == ".") return "images/floor.png";
-  if (cell == "O") return "images/plugged-outlet.png";
-  if (cell == "R") return "images/plugged-robot.png";
-  if (cell == "S") return "images/solar.png";
-  if (cell == "o") return "images/unplugged-outlet.png";
-  if (cell == "r") return "images/unplugged-robot.png";
-  if (cell == "#") return "images/wall.png";
+  if (cell === "B") return "images/battery.png";
+  if (cell === ".") return "images/floor.png";
+  if (cell === "O") return "images/plugged-outlet.png";
+  if (cell === "R") return "images/plugged-robot.png";
+  if (cell === "S") return "images/solar.png";
+  if (cell === "o") return "images/unplugged-outlet.png";
+  if (cell === "r") return "images/unplugged-robot.png";
+  if (cell === "#") return "images/wall.png";
   return "";
 }
 
@@ -75,7 +75,7 @@ function loadLevel(width: number, height: number, images: Images, level: Level) 
   for (let y = 0; y<height; ++y) {
     for (let x = 0; x<width; ++x) {
       const cell = level[y][x];
-      if (cell == "R" || cell == "r") player = Just({"x": x, "y": y});
+      if (cell === "R" || cell === "r") player = Just({"x": x, "y": y});
       images[y][x].setAttribute("src", srcForCell(cell));
     }
   }
