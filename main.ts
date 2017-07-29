@@ -265,6 +265,7 @@ window.onload = function() {
         writeCell(player, "R");
 
         energy = maxEnergy;
+        fadeTo.classList.remove("darkest");
         fadeTo.classList.remove("dark");
         fadeTo.classList.remove("darkish");
         fadeTo.classList.add("normal");
@@ -273,14 +274,20 @@ window.onload = function() {
         if (energy > 2) {
           fadeTo.classList.remove("normal");
           fadeTo.classList.add("darkish");
-        } else if (energy >= 0) {
+        } else if (energy > 0) {
           fadeTo.classList.remove("normal");
           fadeTo.classList.remove("darkish");
           fadeTo.classList.add("dark");
+        } else if (energy === 0) {
+          fadeTo.classList.remove("normal");
+          fadeTo.classList.remove("darkish");
+          fadeTo.classList.remove("dark");
+          fadeTo.classList.add("darkest");
         } else {
           fadeTo.classList.remove("normal");
           fadeTo.classList.remove("darkish");
           fadeTo.classList.remove("dark");
+          fadeTo.classList.remove("darkest");
           fadeTo.classList.add("black");
           fadeTo.addEventListener("transitionend", gameOver);
         }
