@@ -240,7 +240,7 @@ window.onload = function() {
     const pos = add(player, dir);
     if (isSolid(cellAt(pos))) return;
 
-    if (energy === 0) return;
+    if (energy < 0) return;
     --energy;
 
     writeCell(player, ".");
@@ -270,10 +270,10 @@ window.onload = function() {
         fadeTo.classList.add("normal");
       } else {
         writeCell(player, "r");
-        if (energy > 3) {
+        if (energy > 2) {
           fadeTo.classList.remove("normal");
           fadeTo.classList.add("darkish");
-        } else if (energy > 0) {
+        } else if (energy >= 0) {
           fadeTo.classList.remove("normal");
           fadeTo.classList.remove("darkish");
           fadeTo.classList.add("dark");
