@@ -76,14 +76,20 @@ window.onload = function() {
     return "";
   }
 
+  function writeCell(pos: Pos, cell: Cell) {
+    images[pos.y][pos.x].setAttribute("src", srcForCell(cell));
+  }
+
   function loadLevel(level: Level) {
     let player: Maybe<Pos> = Nothing;
 
     for (let y = 0; y<height; ++y) {
       for (let x = 0; x<width; ++x) {
+        const pos = {"x": x, "y": y};
         const cell = level[y][x];
+
         if (cell === "R" || cell === "r") player = Just({"x": x, "y": y});
-        images[y][x].setAttribute("src", srcForCell(cell));
+        writeCell(pos, cell);
       }
     }
 
