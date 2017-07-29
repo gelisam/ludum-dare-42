@@ -105,7 +105,7 @@ window.onload = function() {
       images.push(image_row)
     }
 
-    document.body.appendChild(table);
+    document.getElementById("gamegrid").appendChild(table);
     return images;
   }
 
