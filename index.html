@@ -9,16 +9,33 @@
         width: 288px;
         margin: 100px auto;
       }
-      table {
+      #gamegrid table {
         border-spacing: 0;
       }
-      td {
+      #gamegrid td {
         padding: 0;
       }
-      img {
+      #gamegrid img {
         display: block;
         width: 48px;
         height: 48px;
+      }
+
+      #energy {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        padding-left: 25px;
+        padding-right: 25px;
+        padding-top: 10px;
+        padding-bottom: 5px;
+        background-color: #78a0f1;
+        border: 3px solid #094cd5;
+        border-radius: 10px;
+      }
+
+      #energy img {
+        padding: 2px;
       }
 
       #fadeTo {
@@ -49,6 +66,7 @@
   </head>
   <body>
     <div id="gamegrid"></div>
+    <div id="energy"><img src="images/empty-battery.png"/><img src="images/half-battery.png"/><img src="images/full-battery.png"/></div>
     <div id="fadeTo" class="normal"></div>
   </body>
 </html>
