@@ -197,10 +197,12 @@ window.onload = function() {
   }
 
 
+  const initialWithinCutscene = false;
   const initialHasSolarPanel = false;
   const initialAreLightsOut = false;
   const initialMaxEnergy = 0;
   const initialEnergy = 0;
+  let withinCutscene = initialWithinCutscene;
   let hasSolarPanel = initialHasSolarPanel;
   let areLightsOut = initialAreLightsOut;
   let maxEnergy = initialMaxEnergy;
@@ -259,11 +261,10 @@ window.onload = function() {
   displayEnergy();
 
   function movePlayer(dir: Pos) {
+    if (withinCutscene) return;
+
     const pos = add(player, dir);
     if (isSolid(cellAt(pos))) return;
-
-    if (energy < 0) return;
-    --energy;
 
     writeCell(player, ".");
     {
@@ -278,12 +279,13 @@ window.onload = function() {
     if (cellAt(player) === "B") {
       maxEnergy += 2;
       energy = maxEnergy;
-    }
-    if (cellAt(player) === "S") {
+    } else if (cellAt(player) === "S") {
       hasSolarPanel = true;
       areLightsOut = true;
       refreshLevel();
       energy = maxEnergy;
+    } else {
+      --energy;
     }
 
     {
@@ -312,6 +314,7 @@ window.onload = function() {
           fadeTo.classList.remove("dark");
           fadeTo.classList.add("darkest");
         } else {
+          withinCutscene = true;
           fadeTo.classList.remove("normal");
           fadeTo.classList.remove("darkish");
           fadeTo.classList.remove("dark");
@@ -333,6 +336,7 @@ window.onload = function() {
   }
 
   function reset() {
+    withinCutscene = initialWithinCutscene;
     hasSolarPanel = initialHasSolarPanel;
     areLightsOut = initialAreLightsOut;
     maxEnergy = initialMaxEnergy;
