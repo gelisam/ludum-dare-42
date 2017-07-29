@@ -5,5 +5,5 @@ function greeter(person: string) {
 var user = "World";
 
 window.onload = function() {
-  document.body.innerHTML = greeter(user);
+  //document.body.innerHTML = greeter(user);
 };
