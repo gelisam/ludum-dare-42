@@ -575,39 +575,41 @@ window.onload = function() {
         writeCell(player, "R");
 
         energy = maxEnergy;
+      } else {
+        writeCell(player, hasSolarPanel ? "s" : "r");
+      }
+
+      if (energy == maxEnergy) {
         fadeTo.classList.remove("darkest");
         fadeTo.classList.remove("dark");
         fadeTo.classList.remove("darkish");
         fadeTo.classList.add("normal");
-      } else {
-        writeCell(player, hasSolarPanel ? "s" : "r");
-        if (energy > 2) {
-          fadeTo.classList.remove("normal");
-          fadeTo.classList.add("darkish");
-        } else if (energy > 0) {
-          fadeTo.classList.remove("normal");
-          fadeTo.classList.remove("darkish");
-          fadeTo.classList.add("dark");
-        } else if (energy === 0) {
-          fadeTo.classList.remove("normal");
-          fadeTo.classList.remove("darkish");
-          fadeTo.classList.remove("dark");
-          fadeTo.classList.add("darkest");
+      } else if (energy > 2) {
+        fadeTo.classList.remove("normal");
+        fadeTo.classList.add("darkish");
+      } else if (energy > 0) {
+        fadeTo.classList.remove("normal");
+        fadeTo.classList.remove("darkish");
+        fadeTo.classList.add("dark");
+      } else if (energy === 0) {
+        fadeTo.classList.remove("normal");
+        fadeTo.classList.remove("darkish");
+        fadeTo.classList.remove("dark");
+        fadeTo.classList.add("darkest");
 
-          if (!lowBatteryCutsceneHasPlayed) {
-            lowBatteryCutsceneHasPlayed = true;
-            playCutscene(sequenceCutscenes([
-              thoughtsCutscene("Famous last words:"),
-              thoughtsCutscene("\"Wow, these batteries run out fast!\""),
-            ]));
-          }
-        } else {
-          fadeTo.classList.remove("normal");
-          fadeTo.classList.remove("darkish");
-          fadeTo.classList.remove("dark");
-          fadeTo.classList.remove("darkest");
-          gameOver();
+        if (!lowBatteryCutsceneHasPlayed) {
+          lowBatteryCutsceneHasPlayed = true;
+          playCutscene(sequenceCutscenes([
+            thoughtsCutscene("Famous last words:"),
+            thoughtsCutscene("\"Wow, these batteries run out fast!\""),
+          ]));
         }
+      } else {
+        fadeTo.classList.remove("normal");
+        fadeTo.classList.remove("darkish");
+        fadeTo.classList.remove("dark");
+        fadeTo.classList.remove("darkest");
+        gameOver();
       }
     }
 
