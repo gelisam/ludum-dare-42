@@ -13,6 +13,84 @@ function Just<A>(value: A): Just<A> {
 }
 
 
+type Done = {
+  ctor: "Done",
+};
+type Run = {
+  ctor: "Run",
+  cc: () => Cutscene,
+};
+type PressAnyKey = {
+  ctor: "PressAnyKey",
+  cc: Cutscene,
+};
+type Delay = {
+  ctor: "Delay",
+  millis: number,
+  cc: Cutscene,
+};
+type Cutscene = Done | Run | PressAnyKey | Delay;
+
+const Done: Cutscene = {
+  ctor: "Done",
+};
+function Run(cc: () => Cutscene): Cutscene {
+  return {ctor: "Run", cc: cc};
+}
+function PressAnyKey(cc: Cutscene): Cutscene {
+  return {ctor: "PressAnyKey", cc: cc};
+}
+function Delay(millis: number, cc: Cutscene): Cutscene {
+  return {ctor: "Delay", millis: millis, cc: cc};
+}
+
+function cutsceneAction(action: () => void): Cutscene {
+  return Run(() => {
+    action();
+    return Done;
+  });
+}
+
+const pauseCutscene: Cutscene = PressAnyKey(Done);
+
+function delayCutscene(millis: number): Cutscene {
+  return Delay(millis, Done);
+}
+
+function sequenceTwoCutscenes(cutscene1: Cutscene, cutscene2: Cutscene): Cutscene {
+  switch (cutscene1.ctor) {
+    case "Done":
+      return cutscene2;
+    case "Run":
+      return Run(() => sequenceTwoCutscenes(cutscene1.cc(), cutscene2));
+    case "PressAnyKey":
+      return PressAnyKey(sequenceTwoCutscenes(cutscene1.cc, cutscene2));
+    case "Delay":
+      return Delay(cutscene1.millis, sequenceTwoCutscenes(cutscene1.cc, cutscene2));
+  }
+}
+
+function sequenceCutscenes(cutscenes: Cutscene[]): Cutscene {
+  let r = Done;
+
+  for (let i = 0; i<cutscenes.length; ++i) {
+    r = sequenceTwoCutscenes(r, cutscenes[i]);
+  }
+
+  return r;
+}
+
+function replicateCutscene(n: number, cutscene: Cutscene): Cutscene {
+  let r = Done;
+
+  for (let i = 0; i<n; ++i) {
+    r = sequenceTwoCutscenes(r, cutscene);
+  }
+
+  return r;
+}
+
+
 function getElementById(id: string): HTMLElement {
   const element = document.getElementById(id);
   if (!element) throw ReferenceError("element with id " + id + " not found");
@@ -89,59 +167,49 @@ window.onload = function() {
   }
 
 
-  let lightOutCount = 0;
-
-  function lightsOut() {
-    lightOutCount = 4;
-    toggleLightsOut();
-  }
-
-  function toggleLightsOut() {
-    if (lightOutCount > 0) --lightOutCount;
-    areLightsOut = !areLightsOut;
+  const lightsOutCutscene = cutsceneAction(() => {
+    areLightsOut = true;
     refreshLevel();
-
-    if (lightOutCount == 0 && areLightsOut) {
-      withinCutscene = false;
-    } else {
-      window.setTimeout(toggleLightsOut, 120);
-    }
-  }
+  });
+  const lightsOnCutscene = cutsceneAction(() => {
+    areLightsOut = false;
+    refreshLevel();
+  });
+  const powerFailureCutscene = sequenceCutscenes([
+    lightsOutCutscene,
+    delayCutscene(500),
+    lightsOnCutscene,
+    delayCutscene(500),
+    replicateCutscene(3, sequenceCutscenes([
+      lightsOutCutscene,
+      delayCutscene(120),
+      lightsOnCutscene,
+      delayCutscene(120),
+    ])),
+    lightsOutCutscene,
+  ]);
 
 
   let thoughtBox = getElementById("thoughtBox");
 
-  function displayThoughts(thoughts: string) {
-    if (thoughts === "") {
-      thoughtBox.classList.add("empty");
-    } else {
-      thoughtBox.textContent = thoughts;
-      thoughtBox.classList.remove("empty");
-    }
-  }
-
-
-  let thoughtsCount = 0;
-  let thoughtsTotal = 0;
-  let completeThoughts = "";
-
-  function animateThoughts(thoughts: string) {
-    withinCutscene = true;
-    thoughtsCount = 0;
-    thoughtsTotal = thoughts.length;
-    completeThoughts = thoughts;
-    advanceThoughts();
-  }
-
-  function advanceThoughts() {
-    ++thoughtsCount;
-    displayThoughts(completeThoughts.slice(0, thoughtsCount));
-
-    if (thoughtsCount >= thoughtsTotal) {
-      withinCutscene = false;
-    } else {
-      window.setTimeout(advanceThoughts, 50);
-    }
+  function thoughtsCutscene(thoughts: string): Cutscene {
+    let i = 0;
+    return sequenceCutscenes([
+      cutsceneAction(() => {
+        thoughtBox.classList.remove("empty");
+      }),
+      replicateCutscene(thoughts.length, sequenceCutscenes([
+        cutsceneAction(() => {
+          ++i;
+          thoughtBox.textContent = thoughts.slice(0,i);
+        }),
+        delayCutscene(50),
+      ])),
+      pauseCutscene,
+      cutsceneAction(() => {
+        thoughtBox.classList.add("empty");
+      }),
+    ]);
   }
 
 
@@ -314,12 +382,52 @@ window.onload = function() {
     virtualBatteryBank = targetBatteryBank;
   }
 
+
+  let nextCutscene: Maybe<Cutscene> = Nothing;
+
+  function playNextCutscene() {
+    if (nextCutscene.ctor == "Just") {
+      const cutscene = nextCutscene.value;
+      nextCutscene = Nothing;
+      playCutscene(cutscene);
+    }
+  }
+
+  function resumePausedCutscene() {
+    if (nextCutscene.ctor == "Just" && nextCutscene.value.ctor == "PressAnyKey") {
+      const cutscene = nextCutscene.value.cc;
+      nextCutscene = Nothing;
+      playCutscene(cutscene);
+    }
+  }
+
+  function playCutscene(cutscene: Cutscene): void {
+    withinCutscene = true;
+    switch (cutscene.ctor) {
+      case "Done":
+        withinCutscene = false;
+        return;
+      case "Run":
+        return playCutscene(cutscene.cc());
+      case "PressAnyKey":
+        nextCutscene = Just(cutscene);
+        return;
+      case "Delay":
+        nextCutscene = Just(cutscene.cc);
+        window.setTimeout(playNextCutscene, cutscene.millis);
+        return;
+    }
+  }
+
+
   displayEnergy();
-  animateThoughts("I'm a robot without a battery. If I walk even one step away from this power outlet, I'll unplug and die. Unless, of course, I plug into another outlet!");
+  playCutscene(sequenceCutscenes([
+    thoughtsCutscene("I'm a robot without a battery."),
+    thoughtsCutscene("If I walk even one step away from this power outlet, I'll unplug and die."),
+    thoughtsCutscene("Unless, of course, I plug into another outlet!"),
+  ]));
 
   function movePlayer(dir: Pos) {
-    if (withinCutscene) return;
-
     const pos = add(player, dir);
     if (isSolid(cellAt(pos))) return;
 
@@ -338,7 +446,7 @@ window.onload = function() {
       energy = maxEnergy;
     } else if (cellAt(player) === "S") {
       hasSolarPanel = true;
-      lightsOut();
+      playCutscene(powerFailureCutscene);
       energy = maxEnergy;
     } else {
       --energy;
@@ -385,10 +493,17 @@ window.onload = function() {
   };
 
   document.onkeydown = function(e) {
-    if      (e.code === "ArrowUp"   ) movePlayer(dirN);
-    else if (e.code === "ArrowRight") movePlayer(dirE);
-    else if (e.code === "ArrowLeft" ) movePlayer(dirW);
-    else if (e.code === "ArrowDown" ) movePlayer(dirS);
+    if (withinCutscene) {
+      resumePausedCutscene();
+    } else if (e.code === "ArrowUp") {
+      movePlayer(dirN);
+    } else if (e.code === "ArrowRight") {
+        movePlayer(dirE);
+    } else if (e.code === "ArrowLeft") {
+      movePlayer(dirW);
+    } else if (e.code === "ArrowDown") {
+      movePlayer(dirS);
+    }
   }
 
   function reset() {
