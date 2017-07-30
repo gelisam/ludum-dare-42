@@ -191,20 +191,25 @@ window.onload = function() {
 
 
   let thoughtBox = getElementById("thoughtBox");
+  let skipTextRequested = false;
 
   function thoughtsCutscene(thoughts: string): Cutscene {
     let i = 0;
     return sequenceCutscenes([
       cutsceneAction(() => {
         thoughtBox.classList.remove("empty");
+        skipTextRequested = false;
       }),
-      replicateCutscene(thoughts.length, sequenceCutscenes([
-        cutsceneAction(() => {
+      replicateCutscene(thoughts.length, Run(() => {
+        if (skipTextRequested) {
+          thoughtBox.textContent = thoughts;
+          return Done;
+        } else {
           ++i;
           thoughtBox.textContent = thoughts.slice(0,i);
-        }),
-        delayCutscene(50),
-      ])),
+          return delayCutscene(50);
+        }
+      })),
       pauseCutscene,
       cutsceneAction(() => {
         thoughtBox.classList.add("empty");
@@ -494,6 +499,7 @@ window.onload = function() {
 
   document.onkeydown = function(e) {
     if (withinCutscene) {
+      skipTextRequested = true;
       resumePausedCutscene();
     } else if (e.code === "ArrowUp") {
       movePlayer(dirN);
