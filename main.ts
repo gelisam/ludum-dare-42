@@ -1,15 +1,15 @@
 type Nothing = {
-  "ctor": "Nothing",
+  ctor: "Nothing",
 }
 type Just<A> = {
-  "ctor": "Just",
-  "value": A,
+  ctor: "Just",
+  value: A,
 }
 type Maybe<A> = Nothing | Just<A>;
 
-const Nothing: Nothing = {"ctor": "Nothing"};
+const Nothing: Nothing = {ctor: "Nothing"};
 function Just<A>(value: A): Just<A> {
-  return {"ctor": "Just", value: value};
+  return {ctor: "Just", value: value};
 }
 
 
@@ -20,15 +20,15 @@ function getElementById(id: string): HTMLElement {
 }
 
 
-type Pos = {"x": number, "y": number};
+type Pos = {x: number, y: number};
 
-const dirN = {"x":  0, "y": -1};
-const dirE = {"x":  1, "y":  0};
-const dirW = {"x": -1, "y":  0};
-const dirS = {"x":  0, "y":  1};
+const dirN = {x:  0, y: -1};
+const dirE = {x:  1, y:  0};
+const dirW = {x: -1, y:  0};
+const dirS = {x:  0, y:  1};
 
 function add(pos1: Pos, pos2: Pos) {
-  return {"x": pos1.x + pos2.x, "y": pos1.y+pos2.y};
+  return {x: pos1.x + pos2.x, y: pos1.y+pos2.y};
 }
 
 
@@ -219,7 +219,7 @@ window.onload = function() {
   function refreshLevel() {
     for (let y = 0; y<height; ++y) {
       for (let x = 0; x<width; ++x) {
-        const pos = {"x": x, "y": y};
+        const pos = {x: x, y: y};
         writeCell(pos, cellAt(pos));
       }
     }
@@ -230,10 +230,10 @@ window.onload = function() {
 
     for (let y = 0; y<height; ++y) {
       for (let x = 0; x<width; ++x) {
-        const pos = {"x": x, "y": y};
+        const pos = {x: x, y: y};
         const cell = initialLevel[pos.y][pos.x];
 
-        if (cell === "R" || cell === "r") player = Just({"x": x, "y": y});
+        if (cell === "R" || cell === "r") player = Just({x: x, y: y});
         writeCell(pos, cell);
       }
     }
