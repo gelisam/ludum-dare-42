@@ -168,6 +168,8 @@ window.onload = function() {
   ];
 
   const fadeTo = getElementById("fadeTo");
+  const gamegrid = getElementById("gamegrid");
+  const loading = getElementById("loading");
   const splashBox = getElementById("splashBox");
 
   let thoughtBox = getElementById("thoughtBox");
@@ -192,6 +194,9 @@ window.onload = function() {
 
   const batteryBank = getElementById("batteryBank");
   let virtualBatteryBank: number[] = [];
+
+
+  gamegrid.removeChild(loading);
 
 
   function copyLevel() {
@@ -367,10 +372,6 @@ window.onload = function() {
       images.push(image_row)
     }
 
-    const gamegrid = getElementById("gamegrid");
-    while (gamegrid.firstChild) {
-      gamegrid.removeChild(gamegrid.firstChild);
-    }
     gamegrid.appendChild(table);
     return images;
   }
