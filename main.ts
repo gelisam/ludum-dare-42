@@ -195,6 +195,12 @@ window.onload = function() {
   const batteryBank = getElementById("batteryBank");
   let virtualBatteryBank: number[] = [];
 
+  const batterySound1 = new Audio("audio/battery1.wav");
+  const batterySound2 = new Audio("audio/battery2.wav");
+  const batterySound3 = new Audio("audio/battery3.wav");
+  const solarPanelSound = new Audio("audio/solar-panel.wav");
+  const passOutSound = new Audio("audio/pass-out.wav");
+
 
   gamegrid.removeChild(loading);
 
@@ -556,7 +562,7 @@ window.onload = function() {
     const pos = add(player, dir);
     if (isSolid(cellAt(pos))) return;
 
-    if (cellAt(pos) == "D" && !hasSolarPanel) {
+    if (cellAt(pos) === "D" && !hasSolarPanel) {
       playCutscene(thoughtsCutscene("This door leads outside. Certain death lies over there: there are no outlets on trees."));
       return;
     }
@@ -573,6 +579,13 @@ window.onload = function() {
 
     if (cellAt(player) === "B") {
       maxEnergy += 2;
+      if (maxEnergy == 2) {
+        batterySound1.play();
+      } else if (maxEnergy == 4) {
+        batterySound2.play();
+      } else {
+        batterySound3.play();
+      }
       if (!batteryCutsceneHasPlayed) {
         batteryCutsceneHasPlayed = true;
         playCutscene(sequenceCutscenes([
@@ -582,6 +595,7 @@ window.onload = function() {
       }
       energy = maxEnergy;
     } else if (cellAt(player) === "S") {
+      solarPanelSound.play();
       hasSolarPanel = true;
       energy = maxEnergy;
 
@@ -620,7 +634,7 @@ window.onload = function() {
         writeCell(player, hasSolarPanel ? "s" : "r");
       }
 
-      if (energy == maxEnergy) {
+      if (energy === maxEnergy) {
         fadeTo.classList.remove("darkest");
         fadeTo.classList.remove("dark");
         fadeTo.classList.remove("darkish");
@@ -650,6 +664,7 @@ window.onload = function() {
         fadeTo.classList.remove("darkish");
         fadeTo.classList.remove("dark");
         fadeTo.classList.remove("darkest");
+        passOutSound.play();
         gameOver();
       }
     }
