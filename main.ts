@@ -137,6 +137,25 @@ window.onload = function() {
     "......",
   ];
 
+  const fadeTo = getElementById("fadeTo");
+
+  let thoughtBox = getElementById("thoughtBox");
+  let skipTextRequested = false;
+
+  const initialWithinCutscene = false;
+  const initialHasSolarPanel = false;
+  const initialAreLightsOut = false;
+  const initialMaxEnergy = 0;
+  const initialEnergy = 0;
+  let withinCutscene = initialWithinCutscene;
+  let hasSolarPanel = initialHasSolarPanel;
+  let areLightsOut = initialAreLightsOut;
+  let maxEnergy = initialMaxEnergy;
+  let energy = initialEnergy;
+
+  const batteryBank = getElementById("batteryBank");
+  let virtualBatteryBank: number[] = [];
+
 
   function copyLevel() {
     let copiedLevel: Level = [];
@@ -156,8 +175,6 @@ window.onload = function() {
 
   let level = copyLevel();
 
-
-  const fadeTo = getElementById("fadeTo");
 
   function gameOver() {
     fadeTo.removeEventListener("transitionend", gameOver);
@@ -189,9 +206,6 @@ window.onload = function() {
     lightsOutCutscene,
   ]);
 
-
-  let thoughtBox = getElementById("thoughtBox");
-  let skipTextRequested = false;
 
   function thoughtsCutscene(thoughts: string): Cutscene {
     let i = 0;
@@ -329,20 +343,6 @@ window.onload = function() {
     player = maybePlayer.value;
   }
 
-
-  const initialWithinCutscene = false;
-  const initialHasSolarPanel = false;
-  const initialAreLightsOut = false;
-  const initialMaxEnergy = 0;
-  const initialEnergy = 0;
-  let withinCutscene = initialWithinCutscene;
-  let hasSolarPanel = initialHasSolarPanel;
-  let areLightsOut = initialAreLightsOut;
-  let maxEnergy = initialMaxEnergy;
-  let energy = initialEnergy;
-
-  const batteryBank = getElementById("batteryBank");
-  let virtualBatteryBank: number[] = [];
 
   function displayEnergy() {
     const targetBatteryBank: number[] = [];
