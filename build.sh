@@ -2,4 +2,4 @@
 set -e
 
 clear
-tsc --strict main.ts
+tsc --outFile deploy/main.js --strict main.ts
