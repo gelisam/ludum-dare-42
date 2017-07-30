@@ -1,10 +1,10 @@
 type Nothing = {
   ctor: "Nothing",
-}
+};
 type Just<A> = {
   ctor: "Just",
   value: A,
-}
+};
 type Maybe<A> = Nothing | Just<A>;
 
 const Nothing: Nothing = {ctor: "Nothing"};
