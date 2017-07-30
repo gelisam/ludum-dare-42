@@ -164,6 +164,7 @@ window.onload = function() {
   ];
 
   const fadeTo = getElementById("fadeTo");
+  const splashBox = getElementById("splashBox");
 
   let thoughtBox = getElementById("thoughtBox");
   let skipTextRequested = false;
@@ -307,6 +308,32 @@ window.onload = function() {
       }),
     ]);
   }
+
+  const introCutscene = sequenceCutscenes([
+    cutsceneAction(() => {
+      splashBox.classList.remove("empty");
+      splashBox.classList.add("intro");
+    }),
+    pauseCutscene,
+    cutsceneAction(() => {
+      splashBox.classList.remove("intro");
+      splashBox.classList.add("empty");
+      reset();
+    }),
+    thoughtsCutscene("I'm a robot without a battery."),
+    thoughtsCutscene("If I walk even one step away from this power outlet, I'll unplug and die."),
+    thoughtsCutscene("Unless, of course, I plug into another outlet!"),
+  ]);
+
+  const outroCutscene = sequenceCutscenes([
+    cutsceneAction(() => {
+      splashBox.classList.remove("empty");
+      splashBox.classList.add("outro");
+    }),
+    delayCutscene(1000),
+    thoughtsCutscene("This game was created in 48h by Samuel Gélineau for Ludum Dare 39. The theme was \"Running out of Power\"."),
+    thoughtsCutscene("Thanks for playing!"),
+  ]);
 
 
   type Images = HTMLElement[][];
@@ -512,12 +539,7 @@ window.onload = function() {
   }
 
 
-  displayEnergy();
-  playCutscene(sequenceCutscenes([
-    thoughtsCutscene("I'm a robot without a battery."),
-    thoughtsCutscene("If I walk even one step away from this power outlet, I'll unplug and die."),
-    thoughtsCutscene("Unless, of course, I plug into another outlet!"),
-  ]));
+  playCutscene(introCutscene);
 
   function movePlayer(dir: Pos) {
     const pos = add(player, dir);

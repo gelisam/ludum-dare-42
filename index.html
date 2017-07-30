@@ -49,25 +49,43 @@
         width: 100%;
         height: 100%;
       }
-      .normal {
+      #fadeTo.normal {
         background-color: transparent;
         transition: background-color 0.5s;
       }
-      .darkish {
+      #fadeTo.darkish {
         background-color: rgba(0, 0, 0, 0.25);
         transition: background-color 0.5s;
       }
-      .dark {
+      #fadeTo.dark {
         background-color: rgba(0, 0, 0, 0.5);
         transition: background-color 0.5s;
       }
-      .darkest {
+      #fadeTo.darkest {
         background-color: rgba(0, 0, 0, 0.75);
         transition: background-color 0.5s;
       }
-      .black {
+      #fadeTo.black {
         background-color: black;
         transition: background-color 1s;
+      }
+
+      #splashBox {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 800px;
+        height: 600px;
+        margin-top: -300px;
+        margin-left: -400px;
+        border: 4px solid #6c87bf;
+        border-radius: 20px;
+      }
+      #splashBox.intro {
+        background-image: url("images/intro.jpg");
+      }
+      #splashBox.outro {
+        background-image: url("images/intro.jpg");
       }
 
       #thoughtBox {
@@ -96,9 +114,11 @@
     <div id="gamegrid">Loading...</div>
     <div id="batteryBank" class="empty"></div>
     <div id="fadeTo" class="normal"></div>
+    <div id="splashBox" class="empty"></div>
     <div id="thoughtBox" class="empty"></div>
     <div id="preloader">
-      <img src="images/" width="1" height="1" />
+      <img src="images/intro.png" width="1" height="1" />
+      <img src="images/outro.png" width="1" height="1" />
       <img src="images/battery.png" width="1" height="1" />
       <img src="images/dark-battery.png" width="1" height="1" />
       <img src="images/dark-floor.png" width="1" height="1" />
