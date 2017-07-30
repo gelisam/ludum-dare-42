@@ -170,6 +170,9 @@ window.onload = function() {
 
   let deathCutsceneHasPlayed = false;
   let deathCutsceneWithItemsHasPlayed = false;
+  let batteryCutsceneHasPlayed = false;
+  let lowBatteryCutsceneHasPlayed = false;
+  let solarPanelCutsceneHasPlayed = false;
 
   const initialWithinCutscene = false;
   const initialHasSolarPanel = false;
@@ -532,11 +535,35 @@ window.onload = function() {
 
     if (cellAt(player) === "B") {
       maxEnergy += 2;
+      if (!batteryCutsceneHasPlayed) {
+        batteryCutsceneHasPlayed = true;
+        playCutscene(sequenceCutscenes([
+          thoughtsCutscene("LEAP OF FAITH!!!"),
+          thoughtsCutscene("What luck! This battery is just my size."),
+        ]));
+      }
       energy = maxEnergy;
     } else if (cellAt(player) === "S") {
       hasSolarPanel = true;
-      playCutscene(powerFailureCutscene);
       energy = maxEnergy;
+
+      if (!solarPanelCutsceneHasPlayed) {
+        solarPanelCutsceneHasPlayed = true;
+        playCutscene(sequenceCutscenes([
+          thoughtsCutscene("Nice, a solar panel!!!"),
+          thoughtsCutscene("I don't need batteries nor power outlets anymore! I am a free robot!"),
+          thoughtsCutscene("Green energy, too!"),
+          delayCutscene(1000),
+          powerFailureCutscene,
+          delayCutscene(1000),
+          thoughtsCutscene("Unless, of course, a power failure were to cut off the lights."),
+          thoughtsCutscene("Looks like it's still sunny out there. Am I brave enough to go... Outside?"),
+          delayCutscene(1000),
+          thoughtsCutscene("Wait, during a power failure, the power outlets won't work either. That might be problematic."),
+        ]));
+      } else {
+        playCutscene(powerFailureCutscene);
+      }
     } else {
       --energy;
     }
@@ -566,6 +593,14 @@ window.onload = function() {
           fadeTo.classList.remove("darkish");
           fadeTo.classList.remove("dark");
           fadeTo.classList.add("darkest");
+
+          if (!lowBatteryCutsceneHasPlayed) {
+            lowBatteryCutsceneHasPlayed = true;
+            playCutscene(sequenceCutscenes([
+              thoughtsCutscene("Famous last words:"),
+              thoughtsCutscene("\"Wow, these batteries run out fast!\""),
+            ]));
+          }
         } else {
           fadeTo.classList.remove("normal");
           fadeTo.classList.remove("darkish");
