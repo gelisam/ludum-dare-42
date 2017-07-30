@@ -62,6 +62,10 @@ function cutsceneAction(action: () => void): Cutscene {
 
 const pauseCutscene: Cutscene = PressAnyKey(Done);
 
+function hangCutscene(): Cutscene {
+  return PressAnyKey(Run(hangCutscene));
+}
+
 function delayCutscene(millis: number): Cutscene {
   return Delay(millis, Done);
 }
@@ -155,7 +159,7 @@ window.onload = function() {
   const height = 6;
 
   const initialLevel = [
-    "#Oooo#",
+    "DOooo#",
     ".R....",
     "...B..",
     "##o.B.",
@@ -316,7 +320,7 @@ window.onload = function() {
     }),
     pauseCutscene,
     cutsceneAction(() => {
-      splashBox.classList.remove("intro");
+      splashBox.classList.remove("outro");
       splashBox.classList.add("empty");
       reset();
     }),
@@ -331,8 +335,9 @@ window.onload = function() {
       splashBox.classList.add("outro");
     }),
     delayCutscene(1000),
-    thoughtsCutscene("This game was created in 48h by Samuel Gélineau for Ludum Dare 39. The theme was \"Running out of Power\"."),
+    thoughtsCutscene("This game was created in 48h by Samuel Gelineau for Ludum Dare 39. The theme was \"Running out of Power\"."),
     thoughtsCutscene("Thanks for playing!"),
+    hangCutscene(),
   ]);
 
 
@@ -387,12 +392,14 @@ window.onload = function() {
   function srcForCell(cell: Cell) {
     if (areLightsOut) {
       if (cell === "B") return "images/dark-battery.png";
+      if (cell === "D") return "images/dark-door.jpg";
       if (cell === ".") return "images/dark-floor.png";
       if (cell === "s") return "images/dark-solar-robot.png";
       if (cell === "o") return "images/dark-outlet.png";
       if (cell === "#") return "images/dark-wall.png";
     } else {
       if (cell === "B") return "images/battery.png";
+      if (cell === "D") return "images/door.jpg";
       if (cell === ".") return "images/floor.png";
       if (cell === "O") return "images/plugged-outlet.png";
       if (cell === "R") return "images/plugged-robot.png";
@@ -545,6 +552,11 @@ window.onload = function() {
     const pos = add(player, dir);
     if (isSolid(cellAt(pos))) return;
 
+    if (cellAt(pos) == "D" && !hasSolarPanel) {
+      playCutscene(thoughtsCutscene("This door leads outside. Certain death lies over there: there are no outlets on trees."));
+      return;
+    }
+
     writeCell(player, ".");
     {
       const above = add(player, dirN);
@@ -586,6 +598,9 @@ window.onload = function() {
       } else {
         playCutscene(powerFailureCutscene);
       }
+    } else if (cellAt(player) === "D" && hasSolarPanel) {
+      playCutscene(outroCutscene);
+      return;
     } else {
       --energy;
     }
