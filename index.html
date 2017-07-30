@@ -8,6 +8,7 @@
       #gamegrid {
         width: 288px;
         margin: 100px auto;
+        color: white;
       }
       #gamegrid table {
         border-spacing: 0;
@@ -77,13 +78,42 @@
         margin: 20px;
         font-size: 150%;
       }
+
+      #preloader {
+        position: absolute;
+        left: -9999px;
+        top:  -9999px;
+      }
+      #preloader img {
+        display: block;
+      }
     </style>
     <script src="main.js"></script>
   </head>
   <body>
-    <div id="gamegrid"></div>
+    <div id="gamegrid">Loading...</div>
     <div id="batteryBank" class="empty"></div>
     <div id="fadeTo" class="normal"></div>
     <div id="thoughtBox" class="empty"></div>
+    <div id="preloader">
+      <img src="images/" width="1" height="1" />
+      <img src="images/battery.png" width="1" height="1" />
+      <img src="images/dark-battery.png" width="1" height="1" />
+      <img src="images/dark-floor.png" width="1" height="1" />
+      <img src="images/dark-outlet.png" width="1" height="1" />
+      <img src="images/dark-solar-robot.png" width="1" height="1" />
+      <img src="images/dark-wall.png" width="1" height="1" />
+      <img src="images/empty-battery.png" width="1" height="1" />
+      <img src="images/floor.png" width="1" height="1" />
+      <img src="images/full-battery.png" width="1" height="1" />
+      <img src="images/half-battery.png" width="1" height="1" />
+      <img src="images/plugged-outlet.png" width="1" height="1" />
+      <img src="images/plugged-robot.png" width="1" height="1" />
+      <img src="images/solar-robot.png" width="1" height="1" />
+      <img src="images/solar.png" width="1" height="1" />
+      <img src="images/unplugged-outlet.png" width="1" height="1" />
+      <img src="images/unplugged-robot.png" width="1" height="1" />
+      <img src="images/wall.png" width="1" height="1" />
+    </div>
   </body>
 </html>

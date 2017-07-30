@@ -241,7 +241,11 @@ window.onload = function() {
       images.push(image_row)
     }
 
-    getElementById("gamegrid").appendChild(table);
+    const gamegrid = getElementById("gamegrid");
+    while (gamegrid.firstChild) {
+      gamegrid.removeChild(gamegrid.firstChild);
+    }
+    gamegrid.appendChild(table);
     return images;
   }
 
