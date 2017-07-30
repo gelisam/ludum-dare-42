@@ -29,7 +29,13 @@ type Delay = {
   millis: number,
   cc: Cutscene,
 };
-type Cutscene = Done | Run | PressAnyKey | Delay;
+type Transition = {
+  ctor: "Transition",
+  elem: HTMLElement,
+  classToAdd: string,
+  cc: Cutscene,
+};
+type Cutscene = Done | Run | PressAnyKey | Delay | Transition;
 
 const Done: Cutscene = {
   ctor: "Done",
@@ -42,6 +48,9 @@ function PressAnyKey(cc: Cutscene): Cutscene {
 }
 function Delay(millis: number, cc: Cutscene): Cutscene {
   return {ctor: "Delay", millis: millis, cc: cc};
+}
+function Transition(elem: HTMLElement, classToAdd: string, cc: Cutscene): Cutscene {
+  return {ctor: "Transition", elem: elem, classToAdd: classToAdd, cc: cc};
 }
 
 function cutsceneAction(action: () => void): Cutscene {
@@ -57,16 +66,33 @@ function delayCutscene(millis: number): Cutscene {
   return Delay(millis, Done);
 }
 
+function transitionCutscene(elem: HTMLElement, classToAdd: string): Cutscene {
+  return Transition(elem, classToAdd, Done);
+}
+
 function sequenceTwoCutscenes(cutscene1: Cutscene, cutscene2: Cutscene): Cutscene {
   switch (cutscene1.ctor) {
     case "Done":
       return cutscene2;
     case "Run":
-      return Run(() => sequenceTwoCutscenes(cutscene1.cc(), cutscene2));
+      return Run(
+        () => sequenceTwoCutscenes(cutscene1.cc(), cutscene2)
+      );
     case "PressAnyKey":
-      return PressAnyKey(sequenceTwoCutscenes(cutscene1.cc, cutscene2));
+      return PressAnyKey(
+        sequenceTwoCutscenes(cutscene1.cc, cutscene2)
+      );
     case "Delay":
-      return Delay(cutscene1.millis, sequenceTwoCutscenes(cutscene1.cc, cutscene2));
+      return Delay(
+        cutscene1.millis,
+        sequenceTwoCutscenes(cutscene1.cc, cutscene2)
+      );
+    case "Transition":
+      return Transition(
+        cutscene1.elem,
+        cutscene1.classToAdd,
+        sequenceTwoCutscenes(cutscene1.cc, cutscene2)
+      );
   }
 }
 
@@ -142,6 +168,9 @@ window.onload = function() {
   let thoughtBox = getElementById("thoughtBox");
   let skipTextRequested = false;
 
+  let deathCutsceneHasPlayed = false;
+  let deathCutsceneWithItemsHasPlayed = false;
+
   const initialWithinCutscene = false;
   const initialHasSolarPanel = false;
   const initialAreLightsOut = false;
@@ -177,10 +206,55 @@ window.onload = function() {
 
 
   function gameOver() {
-    fadeTo.removeEventListener("transitionend", gameOver);
-    fadeTo.classList.remove("black");
-    fadeTo.classList.remove("normal");
-    reset();
+    if (maxEnergy === 0) {
+      if (!deathCutsceneHasPlayed) {
+        deathCutsceneHasPlayed = true;
+
+        playCutscene(sequenceCutscenes([
+          transitionCutscene(fadeTo, "black"),
+          thoughtsCutscene("Am I dead?"),
+          cutsceneAction(reset),
+          transitionCutscene(fadeTo, "normal"),
+          thoughtsCutscene("No, clearly not. I'm back where I started."),
+          thoughtsCutscene("The Professor must have plugged me back."),
+        ]));
+      } else {
+        playCutscene(sequenceCutscenes([
+          transitionCutscene(fadeTo, "black"),
+          cutsceneAction(reset),
+        ]));
+      }
+    } else {
+      if (!deathCutsceneWithItemsHasPlayed) {
+        deathCutsceneWithItemsHasPlayed = true;
+
+        if (!deathCutsceneHasPlayed) {
+          deathCutsceneHasPlayed = true;
+
+          playCutscene(sequenceCutscenes([
+            transitionCutscene(fadeTo, "black"),
+            thoughtsCutscene("Am I dead?"),
+            cutsceneAction(reset),
+            transitionCutscene(fadeTo, "normal"),
+            thoughtsCutscene("Okay, good news: I'm not dead. I'm back where I started."),
+            thoughtsCutscene("The Professor must have plugged me back."),
+            thoughtsCutscene("Bad news: the Professor has also put all the batteries back where they belong, so I have to start over!"),
+          ]));
+        } else {
+          playCutscene(sequenceCutscenes([
+            transitionCutscene(fadeTo, "black"),
+            cutsceneAction(reset),
+            thoughtsCutscene("The Professor has plugged me back, once again."),
+            thoughtsCutscene("Oh no; it looks like he also put all the batteries back where they belong, so I have to start over!"),
+          ]));
+        }
+      } else {
+        playCutscene(sequenceCutscenes([
+          transitionCutscene(fadeTo, "black"),
+          cutsceneAction(reset),
+        ]));
+      }
+    }
   }
 
 
@@ -395,7 +469,8 @@ window.onload = function() {
   let nextCutscene: Maybe<Cutscene> = Nothing;
 
   function playNextCutscene() {
-    if (nextCutscene.ctor == "Just") {
+    console.log("playNextCutscene");
+    if (nextCutscene.ctor === "Just") {
       const cutscene = nextCutscene.value;
       nextCutscene = Nothing;
       playCutscene(cutscene);
@@ -403,7 +478,7 @@ window.onload = function() {
   }
 
   function resumePausedCutscene() {
-    if (nextCutscene.ctor == "Just" && nextCutscene.value.ctor == "PressAnyKey") {
+    if (nextCutscene.ctor === "Just" && nextCutscene.value.ctor === "PressAnyKey") {
       const cutscene = nextCutscene.value.cc;
       nextCutscene = Nothing;
       playCutscene(cutscene);
@@ -424,6 +499,11 @@ window.onload = function() {
       case "Delay":
         nextCutscene = Just(cutscene.cc);
         window.setTimeout(playNextCutscene, cutscene.millis);
+        return;
+      case "Transition":
+        nextCutscene = Just(cutscene.cc);
+        cutscene.elem.classList.add(cutscene.classToAdd);
+        cutscene.elem.addEventListener("transitionend", playNextCutscene);
         return;
     }
   }
@@ -487,13 +567,11 @@ window.onload = function() {
           fadeTo.classList.remove("dark");
           fadeTo.classList.add("darkest");
         } else {
-          withinCutscene = true;
           fadeTo.classList.remove("normal");
           fadeTo.classList.remove("darkish");
           fadeTo.classList.remove("dark");
           fadeTo.classList.remove("darkest");
-          fadeTo.classList.add("black");
-          fadeTo.addEventListener("transitionend", gameOver);
+          gameOver();
         }
       }
     }
@@ -517,7 +595,9 @@ window.onload = function() {
   }
 
   function reset() {
-    withinCutscene = initialWithinCutscene;
+    fadeTo.classList.remove("black");
+    fadeTo.classList.add("normal");
+
     hasSolarPanel = initialHasSolarPanel;
     areLightsOut = initialAreLightsOut;
     maxEnergy = initialMaxEnergy;
