@@ -335,7 +335,10 @@ window.onload = function() {
       splashBox.classList.add("outro");
     }),
     delayCutscene(1000),
-    thoughtsCutscene("This game was created in 48h by Samuel Gelineau for Ludum Dare 39. The theme was \"Running out of Power\"."),
+    thoughtsCutscene("Hooray, I'm outside!"),
+    delayCutscene(2000),
+    thoughtsCutscene("By the way, the Professor created me in 48h for Ludum Dare 39. His name is Samuel Gélineau."),
+    thoughtsCutscene("The theme was \"Running out of Power\". That's a bit of a cruel theme, if you ask me!"),
     thoughtsCutscene("Thanks for playing!"),
     hangCutscene(),
   ]);
