@@ -608,10 +608,11 @@ window.onload = function() {
           delayCutscene(1000),
           powerFailureCutscene,
           delayCutscene(1000),
-          thoughtsCutscene("Unless, of course, a power failure were to cut off the lights."),
+          thoughtsCutscene("Oh no. Was that... a power failure?"),
+          thoughtsCutscene("My new solar panel won't work in the dark, I need to find someplace light!"),
           thoughtsCutscene("Looks like it's still sunny out there. Am I brave enough to go... Outside?"),
           delayCutscene(1000),
-          thoughtsCutscene("Wait, during a power failure, the power outlets won't work either. That might be problematic."),
+          thoughtsCutscene("Wait, during a power failure, the power outlets won't work either. That might be problematic!"),
         ]));
       } else {
         playCutscene(powerFailureCutscene);
