@@ -275,6 +275,20 @@ window.onload = function() {
           }
         }
 
+        function selectAnotherSprite() {
+          if (currentSpriteNumber == visibleSpriteCount - 1) {
+            currentSpriteNumber = 0;
+          } else {
+            currentSpriteNumber++;
+          }
+
+          if (!sprites[currentSpriteNumber]) {
+            selectAnotherSprite();
+          } else {
+            console.log(currentSpriteNumber);
+          }
+        }
+
         function findNextSprite(): Sprite | null {
           return sprites[visibleSpriteCount];
         }
@@ -328,13 +342,27 @@ window.onload = function() {
           const sprite = sprites[currentSpriteNumber];
           if (!sprite) return;
 
+          var handled = true;
+
           if      (event.key === "ArrowUp"    || event.key.toLowerCase() === "w") sprite.y -= event.shiftKey ? 8 : 1;
           else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") sprite.x -= event.shiftKey ? 8 : 1;
           else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") sprite.y += event.shiftKey ? 8 : 1;
           else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") sprite.x += event.shiftKey ? 8 : 1;
           else if (event.key === "Enter" && !anySpritesCollide()) addNextSprite();
           else if (event.key === " ") giveSpriteAway();
-          //else console.log(event.key);
+          else if (event.key === "Tab") {
+            console.log("handling tab");
+            selectAnotherSprite();
+          }
+          else {
+            handled = false;
+            //console.log(event.key);
+          }
+
+          if (handled) {
+            event.stopPropagation();
+            event.preventDefault();
+          }
 
           updateGameScreen();
         }
