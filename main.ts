@@ -123,17 +123,6 @@ window.onload = function() {
   function drawScene() {
     g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
 
-    //for(var i=-100; i<100; ++i) {
-    //  for(var j=-100; j<100; ++j) {
-    //    movingBlob.x = staticBlob.x + i;
-    //    movingBlob.y = staticBlob.y + j;
-    //    if (spritesCollide(staticBlob, movingBlob)) {
-    //      g.fillRect(staticBlob.x + i, staticBlob.y + j, 1, 1);
-    //    }
-    //  }
-    //}
-
-
     drawSprite(staticBlob);
     if (!spritesCollide(staticBlob, movingBlob)) {
       drawSprite(movingBlob);
