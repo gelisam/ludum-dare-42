@@ -164,11 +164,20 @@ window.onload = function() {
       spriteY: number
     } | null = null;
 
-    function loadNextSprite() {
-      loadedSpriteCount++;
-      currentSpriteNumber = loadedSpriteCount - 1;
+    function nextSprite(): Sprite | null {
+      return sprites[loadedSpriteCount];
+    }
 
-      if (!sprites[currentSpriteNumber]) {
+    function loadNextSprite() {
+      const sprite = nextSprite();
+
+      if (sprite) {
+        loadedSpriteCount++;
+        currentSpriteNumber = loadedSpriteCount - 1;
+
+        sprite.x = Math.round((gameCanvas.width - sprite.width) / 2);
+        sprite.y = Math.round((gameCanvas.height - sprite.height) / 2);
+      } else {
         loadNextLevel();
       }
     }
