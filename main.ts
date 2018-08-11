@@ -8,25 +8,6 @@ function error<A>(msg: string): A {
 
 
 ///////////
-// Maybe //
-///////////
-
-type Nothing = {
-  ctor: "Nothing",
-};
-type Just<A> = {
-  ctor: "Just",
-  value: A,
-};
-type Maybe<A> = Nothing | Just<A>;
-
-const Nothing: Nothing = {ctor: "Nothing"};
-function Just<A>(value: A): Just<A> {
-  return {ctor: "Just", value: value};
-}
-
-
-///////////
 // Image //
 ///////////
 
@@ -64,6 +45,30 @@ declare function collisionDetection(): CollisionDetector;
 
 const collisionDetector = collisionDetection();
 
+
+////////////////
+// GameScreen //
+////////////////
+
+type GameScreen = {
+  load: () => void,
+  draw: () => void,
+  unload: () => void
+};
+
+var currentGameScreen: GameScreen | null = null;
+
+function loadGameScreen(gameScreen: GameScreen) {
+  if (currentGameScreen) currentGameScreen.unload();
+
+  currentGameScreen = gameScreen;
+  currentGameScreen.load();
+  currentGameScreen.draw();
+}
+
+function updateGameScreen() {
+  if (currentGameScreen) currentGameScreen.draw();
+}
 
 
 window.onload = function() {
@@ -112,31 +117,74 @@ window.onload = function() {
   }
 
 
+  //////////////////
+  // level screen //
+  //////////////////
+
+  const levelScreen: GameScreen = (() => {
+    const staticSprite = loadSprite("images/tape.png");
+    const movingSprite = loadSprite("images/scissors.png");
+    staticSprite.x = 100;
+    staticSprite.y = 100;
+    movingSprite.x = 100;
+    movingSprite.y = 100;
+
+    function moveSprite(event: MouseEvent) {
+      movingSprite.x = event.offsetX;
+      movingSprite.y = event.offsetY;
+
+      updateGameScreen();
+    }
+
+    return {
+      load: () => {
+        gameCanvas.addEventListener("mousemove", moveSprite);
+      },
+      unload: () => {
+        gameCanvas.removeEventListener("mousemove", moveSprite);
+      },
+      draw: () => {
+        g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+        drawSprite(staticSprite);
+        if (!spritesCollide(staticSprite, movingSprite)) {
+          drawSprite(movingSprite);
+        }
+      }
+    };
+  })();
+
+
+  //////////////////
+  // title screen //
+  //////////////////
+
+  const titleScreen: GameScreen = (() => {
+    const titleSprite = loadSprite("images/title.png");
+
+    function nextScreen() {
+      loadGameScreen(levelScreen);
+    }
+
+    return {
+      load: () => {
+        gameCanvas.addEventListener("mouseup", nextScreen);
+      },
+      unload: () => {
+        gameCanvas.removeEventListener("mouseup", nextScreen);
+      },
+      draw: () => {
+        g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+        drawSprite(titleSprite);
+      }
+    };
+  })();
+
+
   //////////
   // main //
   //////////
 
-  g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-  const staticBlob = loadSprite("images/tape.png");
-  const movingBlob = loadSprite("images/scissors.png");
-
-  function drawScene() {
-    g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-
-    drawSprite(staticBlob);
-    if (!spritesCollide(staticBlob, movingBlob)) {
-      drawSprite(movingBlob);
-    }
-  }
-
-  gameCanvas.onmousemove = (event: MouseEvent) => {
-    movingBlob.x = event.offsetX;
-    movingBlob.y = event.offsetY;
-
-    drawScene();
-  };
-
-  staticBlob.x = 100;
-  staticBlob.y = 100;
-  drawScene();
+  loadGameScreen(titleScreen);
 };
