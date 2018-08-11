@@ -94,7 +94,7 @@ function collisionDetection() {
 	 *    width: (Number) object height,
 	 *    height: (Number) object width,
 	 *    height: (Number) object width,
-	 *    pixelmap: (Object) pixel map object generated from buildPixelMap()
+	 *    pixelMap: (Object) pixel map object generated from buildPixelMap()
 	 * }
 	 *
 	 * @param source (Object) The source object
@@ -153,7 +153,7 @@ function collisionDetection() {
 
 		for( var y = 0; y < source.height; y++) {
 			for( var x = 0; x < source.width; x++ ) {
-				var dataRowColOffset = y+"_"+x;//((y * source.width) + x);
+				var dataRowColOffset = x+"_"+y;//((y * source.width) + x);
 				var pixel = ctx.getImageData(x,y,resolution,resolution);
 				var pixelData = pixel.data;
 
