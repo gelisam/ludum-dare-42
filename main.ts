@@ -17,6 +17,31 @@ function Just<A>(value: A): Just<A> {
 }
 
 
+///////////////////////
+// CollisionDetector //
+///////////////////////
+
+// type definitions for class.collisionDetection.js
+
+enum PixelMap {};
+
+type Sprite = {
+  x: Number,
+  y: Number,
+  width: Number,
+  height: Number,
+  pixelmap: PixelMap
+};
+
+type CollisionDetector = {
+  hitTest: (source: Sprite, target: Sprite) => Boolean,
+  buildPixelMap: (source: HTMLCanvasElement) => PixelMap
+};
+
+declare function collisionDetection(): CollisionDetector;
+
+
+
 //////////
 // main //
 //////////
