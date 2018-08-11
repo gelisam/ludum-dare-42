@@ -11,14 +11,20 @@
       #preloader img {
         display: block;
       }
+
+      canvas {
+        border: 1px solid black;
+      }
     </style>
     <script src="class.collisionDetection.js"></script>
     <script src="main.js"></script>
   </head>
   <body>
-    <canvas id="canvasId" width="64" height="64"></canvas>
+    <center><canvas id="gameCanvas" width="824" height="580"></canvas></center>
     <div id="preloader">
-      <img src="images/L-blob.png" id="L-blob" width="1" height="1" />
+      <canvas id="hiddenCanvas" width="1" height="1"></canvas>
+      <img src="images/L-blob.png" width="1" height="1" />
+      <img src="images/J-blob.png" width="1" height="1" />
     </div>
   </body>
 </html>
