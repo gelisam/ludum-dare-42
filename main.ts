@@ -45,6 +45,26 @@ function loadImage(imageFile: string): Promise<HTMLImageElement> {
   });
 }
 
+function drawCenteredImage(g: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, width: number, height: number) {
+  g.drawImage(img, x - width/2, y - height/2, width, height);
+}
+
+function drawImageInsideBox(g: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, width: number, height: number) {
+  const centerX = x + width/2;
+  const centerY = y + height/2;
+
+  if (img.width <= width && img.height <= height) {
+    // unscaled, centered
+    drawCenteredImage(g, img, centerX, centerY, img.width, img.height);
+  } else if (img.width / img.height >= width / height) {
+    // scale width to fit
+    drawCenteredImage(g, img, centerX, centerY, width, img.height * width / img.width);
+  } else {
+    // scale height to fit
+    drawCenteredImage(g, img, centerX, centerY, img.width * height / img.height, height);
+  }
+}
+
 
 ///////////////////////
 // CollisionDetector //
@@ -234,12 +254,12 @@ window.onload = function() {
           spriteY: number
         } | null = null;
 
-        function nextSprite(): Sprite | null {
+        function findNextSprite(): Sprite | null {
           return sprites[visibleSpriteCount];
         }
 
         function addNextSprite() {
-          const sprite = nextSprite();
+          const sprite = findNextSprite();
 
           if (sprite) {
             visibleSpriteCount++;
@@ -337,6 +357,11 @@ window.onload = function() {
             for(var i=0; i<visibleSpriteCount; i++) {
               const sprite = sprites[i];
               drawSprite(sprite);
+            }
+
+            let nextSprite: Sprite | null = findNextSprite();
+            if (nextSprite) {
+              drawImageInsideBox(g, nextSprite.image, 778, 202, 240, 155);
             }
           }
         };
