@@ -139,10 +139,15 @@ window.onload = function() {
 
   function loadNextLevel() {
     currentLevelNumber = (currentLevelNumber || 0) + 1;
-    console.log("loading level " + currentLevelNumber);
 
     // the first level is at index 0
-    loadGameScreen(loadLevel(levels[currentLevelNumber-1]));
+    const level: Level | null = levels[currentLevelNumber-1];
+
+    if (level) {
+      loadGameScreen(loadLevel(level));
+    } else {
+      loadGameScreen(endScreen);
+    }
   }
 
   function loadLevel(level: Level): GameScreen {
@@ -249,6 +254,25 @@ window.onload = function() {
         g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
 
         drawSprite(titleSprite);
+      }
+    };
+  })();
+
+
+  ////////////////
+  // end screen //
+  ////////////////
+
+  const endScreen: GameScreen = (() => {
+    const endSprite = loadSprite("images/the-end.png");
+
+    return {
+      load: () => {},
+      unload: () => {},
+      draw: () => {
+        g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+        drawSprite(endSprite);
       }
     };
   })();
