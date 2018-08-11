@@ -11,8 +11,21 @@ function error<A>(msg: string): A {
 // Image //
 ///////////
 
-// must be one of the preloaded images in <div id="preloader">!
-function image(src: string): HTMLImageElement {
+function loadImage(src: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+
+    img.addEventListener("load", () => resolve());
+    img.addEventListener("error", () => {
+      reject(new Error("Failed to load image " + src));
+    });
+
+    img.src = src;
+  });
+}
+
+// must be one of the images loaded by <div id="preloader"> or loadImage
+function makeImage(src: string): HTMLImageElement {
   const img = new Image();
   img.src = src;
   return img;
@@ -54,7 +67,7 @@ const collisionDetector = collisionDetection();
 
 type Level = {
   backgroundFile: string,
-  spriteFiles: [string]
+  spriteFiles: string[]
 }
 
 declare const levels: [Level];
@@ -103,9 +116,9 @@ window.onload = function() {
   // Sprite //
   ////////////
 
-  // must be one of the preloaded images in <div id="preloader">!
+  // must be one of the images loaded by <div id="preloader"> or makeLoadingScreen
   function loadSprite(src: string): Sprite {
-    const img = image(src);
+    const img = makeImage(src);
 
     hiddenCanvas.width  = img.width;
     hiddenCanvas.height = img.height;
@@ -131,6 +144,29 @@ window.onload = function() {
   }
 
 
+
+
+  ////////////////////
+  // loading screen //
+  ////////////////////
+
+  function makeLoadingScreen(imageFiles: string[], makeNextScreen: () => GameScreen): GameScreen {
+    return {
+      load: () => {
+        Promise.all(imageFiles.map(loadImage)).then(() => {
+          loadGameScreen(makeNextScreen());
+        });
+      },
+      unload: () => {},
+      draw: () => {
+        g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+        g.font = "30px Arial";
+        g.fillText("Loading...", gameCanvas.width / 2 - 50, gameCanvas.height / 2);
+      }
+    };
+  }
+
+
   //////////////////
   // level screen //
   //////////////////
@@ -145,133 +181,138 @@ window.onload = function() {
     const level: Level | null = levels[currentLevelNumber-1];
 
     if (level) {
-      loadGameScreen(loadLevel(level));
+      loadGameScreen(makeLevelScreen(level));
     } else {
       loadGameScreen(endScreen);
     }
   }
 
-  function loadLevel(level: Level): GameScreen {
-    const mouse = loadSprite("images/1px.png");
-    const background = image(level.backgroundFile);
-    const sprites = level.spriteFiles.map(loadSprite);
+  function makeLevelScreen(level: Level): GameScreen {
+    return makeLoadingScreen(
+      [level.backgroundFile].concat(level.spriteFiles),
+      () => {
+        const mouse = loadSprite("images/1px.png");
+        const background = makeImage(level.backgroundFile);
+        const sprites = level.spriteFiles.map(loadSprite);
 
-    var currentSpriteNumber = 0;
-    var loadedSpriteCount = 0;
-    var picked: {
-      sprite: Sprite,
-      mouseX: number,
-      mouseY: number,
-      spriteX: number,
-      spriteY: number
-    } | null = null;
+        var currentSpriteNumber = 0;
+        var loadedSpriteCount = 0;
+        var picked: {
+          sprite: Sprite,
+          mouseX: number,
+          mouseY: number,
+          spriteX: number,
+          spriteY: number
+        } | null = null;
 
-    function nextSprite(): Sprite | null {
-      return sprites[loadedSpriteCount];
-    }
-
-    function loadNextSprite() {
-      const sprite = nextSprite();
-
-      if (sprite) {
-        loadedSpriteCount++;
-        currentSpriteNumber = loadedSpriteCount - 1;
-
-        sprite.x = 390 - Math.round(sprite.width  / 2);
-        sprite.y = 373 - Math.round(sprite.height / 2);
-      } else {
-        loadNextLevel();
-      }
-    }
-
-    function pickSprite(event: MouseEvent) {
-      mouse.x = event.offsetX;
-      mouse.y = event.offsetY;
-
-      for(var i=0; i<loadedSpriteCount; i++) {
-        const sprite = sprites[i];
-        if (spritesCollide(mouse, sprite)) {
-          currentSpriteNumber = i;
-          picked = {
-            sprite: sprite,
-            mouseX: mouse.x,
-            mouseY: mouse.y,
-            spriteX: sprite.x,
-            spriteY: sprite.y
-          };
+        function nextSprite(): Sprite | null {
+          return sprites[loadedSpriteCount];
         }
-      }
-    }
 
-    function dragSprite(event: MouseEvent) {
-      if (picked) {
-        mouse.x = event.offsetX;
-        mouse.y = event.offsetY;
+        function loadNextSprite() {
+          const sprite = nextSprite();
 
-        picked.sprite.x = mouse.x - picked.mouseX + picked.spriteX;
-        picked.sprite.y = mouse.y - picked.mouseY + picked.spriteY;
+          if (sprite) {
+            loadedSpriteCount++;
+            currentSpriteNumber = loadedSpriteCount - 1;
 
-        updateGameScreen();
-      }
-    }
-
-    function moveSprite(event: KeyboardEvent) {
-      const sprite = sprites[currentSpriteNumber];
-
-      if      (event.key === "ArrowUp"    || event.key.toLowerCase() === "w") sprite.y -= event.shiftKey ? 8 : 1;
-      else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") sprite.x -= event.shiftKey ? 8 : 1;
-      else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") sprite.y += event.shiftKey ? 8 : 1;
-      else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") sprite.x += event.shiftKey ? 8 : 1;
-      else if (event.key === "Enter" && !anySpritesCollide()) loadNextSprite();
-      //else console.log(event.key);
-
-      updateGameScreen();
-    }
-
-    function releaseSprite(event: MouseEvent) {
-      picked = null;
-    }
-
-    function anySpritesCollide(): boolean {
-      for(var i=0; i<loadedSpriteCount; i++) {
-        for(var j=i+1; j<loadedSpriteCount; j++) {
-          if (spritesCollide(sprites[i], sprites[j])) {
-            return true;
+            sprite.x = 390 - Math.round(sprite.width  / 2);
+            sprite.y = 373 - Math.round(sprite.height / 2);
+          } else {
+            loadNextLevel();
           }
         }
-      }
 
-      return false;
-    }
+        function pickSprite(event: MouseEvent) {
+          mouse.x = event.offsetX;
+          mouse.y = event.offsetY;
 
-    return {
-      load: () => {
-        gameCanvas.addEventListener("mousedown", pickSprite);
-        gameCanvas.addEventListener("mousemove", dragSprite);
-        gameCanvas.addEventListener("mouseup", releaseSprite);
-        window.addEventListener("keydown", moveSprite);
-
-        loadNextSprite();
-      },
-      unload: () => {
-        gameCanvas.removeEventListener("mousedown", pickSprite);
-        gameCanvas.removeEventListener("mousemove", dragSprite);
-        gameCanvas.removeEventListener("mouseup", releaseSprite);
-        window.removeEventListener("keydown", moveSprite);
-      },
-      draw: () => {
-        g.drawImage(background, 0, 0);
-
-        if (anySpritesCollide()) {
-          g.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+          for(var i=0; i<loadedSpriteCount; i++) {
+            const sprite = sprites[i];
+            if (spritesCollide(mouse, sprite)) {
+              currentSpriteNumber = i;
+              picked = {
+                sprite: sprite,
+                mouseX: mouse.x,
+                mouseY: mouse.y,
+                spriteX: sprite.x,
+                spriteY: sprite.y
+              };
+            }
+          }
         }
 
-        for(var i=0; i<loadedSpriteCount; i++) {
-          const sprite = sprites[i];
-          drawSprite(sprite);
+        function dragSprite(event: MouseEvent) {
+          if (picked) {
+            mouse.x = event.offsetX;
+            mouse.y = event.offsetY;
+
+            picked.sprite.x = mouse.x - picked.mouseX + picked.spriteX;
+            picked.sprite.y = mouse.y - picked.mouseY + picked.spriteY;
+
+            updateGameScreen();
+          }
         }
+
+        function moveSprite(event: KeyboardEvent) {
+          const sprite = sprites[currentSpriteNumber];
+
+          if      (event.key === "ArrowUp"    || event.key.toLowerCase() === "w") sprite.y -= event.shiftKey ? 8 : 1;
+          else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") sprite.x -= event.shiftKey ? 8 : 1;
+          else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") sprite.y += event.shiftKey ? 8 : 1;
+          else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") sprite.x += event.shiftKey ? 8 : 1;
+          else if (event.key === "Enter" && !anySpritesCollide()) loadNextSprite();
+          //else console.log(event.key);
+
+          updateGameScreen();
+        }
+
+        function releaseSprite(event: MouseEvent) {
+          picked = null;
+        }
+
+        function anySpritesCollide(): boolean {
+          for(var i=0; i<loadedSpriteCount; i++) {
+            for(var j=i+1; j<loadedSpriteCount; j++) {
+              if (spritesCollide(sprites[i], sprites[j])) {
+                return true;
+              }
+            }
+          }
+
+          return false;
+        }
+
+        return {
+          load: () => {
+            gameCanvas.addEventListener("mousedown", pickSprite);
+            gameCanvas.addEventListener("mousemove", dragSprite);
+            gameCanvas.addEventListener("mouseup", releaseSprite);
+            window.addEventListener("keydown", moveSprite);
+
+            loadNextSprite();
+          },
+          unload: () => {
+            gameCanvas.removeEventListener("mousedown", pickSprite);
+            gameCanvas.removeEventListener("mousemove", dragSprite);
+            gameCanvas.removeEventListener("mouseup", releaseSprite);
+            window.removeEventListener("keydown", moveSprite);
+          },
+          draw: () => {
+            g.drawImage(background, 0, 0);
+
+            if (anySpritesCollide()) {
+              g.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+            }
+
+            for(var i=0; i<loadedSpriteCount; i++) {
+              const sprite = sprites[i];
+              drawSprite(sprite);
+            }
+          }
+        };
       }
-    };
+    );
   }
 
 
@@ -279,44 +320,48 @@ window.onload = function() {
   // title screen //
   //////////////////
 
-  const titleScreen: GameScreen = (() => {
-    const titleSprite = loadSprite("images/title.png");
+  const titleScreen: GameScreen = makeLoadingScreen(
+    ["images/title.png"],
+    () => {
+      const titleImage = makeImage("images/title.png");
 
-    return {
-      load: () => {
-        gameCanvas.addEventListener("mouseup", loadNextLevel);
-        window.addEventListener("keyup", loadNextLevel);
-      },
-      unload: () => {
-        gameCanvas.removeEventListener("mouseup", loadNextLevel);
-        window.removeEventListener("keyup", loadNextLevel);
-      },
-      draw: () => {
-        g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-
-        drawSprite(titleSprite);
-      }
-    };
-  })();
+      return {
+        load: () => {
+          gameCanvas.addEventListener("mouseup", loadNextLevel);
+          window.addEventListener("keyup", loadNextLevel);
+        },
+        unload: () => {
+          gameCanvas.removeEventListener("mouseup", loadNextLevel);
+          window.removeEventListener("keyup", loadNextLevel);
+        },
+        draw: () => {
+          g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+          g.drawImage(titleImage, 0, 0);
+        }
+      };
+    }
+  );
 
 
   ////////////////
   // end screen //
   ////////////////
 
-  const endScreen: GameScreen = (() => {
-    const endSprite = loadSprite("images/the-end.png");
+  const endScreen: GameScreen = makeLoadingScreen(
+    ["images/the-end.png"],
+    () => {
+      const endImage = makeImage("images/the-end.png");
 
-    return {
-      load: () => {},
-      unload: () => {},
-      draw: () => {
-        g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-
-        drawSprite(endSprite);
-      }
-    };
-  })();
+      return {
+        load: () => {},
+        unload: () => {},
+        draw: () => {
+          g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+          g.drawImage(endImage, 0, 0);
+        }
+      };
+    }
+  );
 
 
   //////////
