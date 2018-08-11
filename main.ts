@@ -250,8 +250,9 @@ window.onload = function() {
           loadSprites(["images/1px.png"].concat(level.spriteFiles))
         ]
       ),
-      ([background, [mouse, ...sprites]]) => {
+      ([background, [mouse, ...loadedSprites]]) => {
         const rabbitImages = [1,2,3,4].map(i => getPreloadedImage(`images/rabbit${i}.png`));
+        var sprites: (Sprite | null)[] = loadedSprites;
 
         var spacebarsUsed = 0;
         var currentSpriteNumber = 0;
@@ -263,6 +264,14 @@ window.onload = function() {
           spriteX: number,
           spriteY: number
         } | null = null;
+
+        function giveSpriteAway() {
+          if (spacebarsUsed < rabbitImages.length-1) {
+            spacebarsUsed++;
+            sprites[currentSpriteNumber] = null;
+            addNextSprite();
+          }
+        }
 
         function findNextSprite(): Sprite | null {
           return sprites[visibleSpriteCount];
@@ -288,7 +297,7 @@ window.onload = function() {
 
           for(var i=0; i<visibleSpriteCount; i++) {
             const sprite = sprites[i];
-            if (spritesCollide(mouse, sprite)) {
+            if (sprite && spritesCollide(mouse, sprite)) {
               currentSpriteNumber = i;
               picked = {
                 sprite: sprite,
@@ -315,12 +324,14 @@ window.onload = function() {
 
         function moveSprite(event: KeyboardEvent) {
           const sprite = sprites[currentSpriteNumber];
+          if (!sprite) return;
 
           if      (event.key === "ArrowUp"    || event.key.toLowerCase() === "w") sprite.y -= event.shiftKey ? 8 : 1;
           else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") sprite.x -= event.shiftKey ? 8 : 1;
           else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") sprite.y += event.shiftKey ? 8 : 1;
           else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") sprite.x += event.shiftKey ? 8 : 1;
           else if (event.key === "Enter" && !anySpritesCollide()) addNextSprite();
+          else if (event.key === " ") giveSpriteAway();
           //else console.log(event.key);
 
           updateGameScreen();
@@ -332,9 +343,15 @@ window.onload = function() {
 
         function anySpritesCollide(): boolean {
           for(var i=0; i<visibleSpriteCount; i++) {
-            for(var j=i+1; j<visibleSpriteCount; j++) {
-              if (spritesCollide(sprites[i], sprites[j])) {
-                return true;
+            const spriteI = sprites[i];
+            if (spriteI) {
+              for(var j=i+1; j<visibleSpriteCount; j++) {
+                const spriteJ = sprites[j];
+                if (spriteJ) {
+                  if (spritesCollide(spriteI, spriteJ)) {
+                    return true;
+                  }
+                }
               }
             }
           }
@@ -366,7 +383,9 @@ window.onload = function() {
 
             for(var i=0; i<visibleSpriteCount; i++) {
               const sprite = sprites[i];
-              drawSprite(sprite);
+              if (sprite) {
+                drawSprite(sprite);
+              }
             }
 
             const nextSprite: Sprite | null = findNextSprite();
