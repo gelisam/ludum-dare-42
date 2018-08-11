@@ -1,4 +1,13 @@
 ///////////
+// error //
+///////////
+
+function error<A>(msg: string): A {
+  throw new Error(msg);
+}
+
+
+///////////
 // Maybe //
 ///////////
 
@@ -26,19 +35,21 @@ function Just<A>(value: A): Just<A> {
 enum PixelMap {};
 
 type Sprite = {
-  x: Number,
-  y: Number,
-  width: Number,
-  height: Number,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
   pixelmap: PixelMap
 };
 
 type CollisionDetector = {
-  hitTest: (source: Sprite, target: Sprite) => Boolean,
+  hitTest: (source: Sprite, target: Sprite) => boolean,
   buildPixelMap: (source: HTMLCanvasElement) => PixelMap
 };
 
 declare function collisionDetection(): CollisionDetector;
+
+const collisionDetector = collisionDetection();
 
 
 
@@ -47,4 +58,9 @@ declare function collisionDetection(): CollisionDetector;
 //////////
 
 window.onload = function() {
+  const canvas = <HTMLCanvasElement>document.getElementById('canvasId');
+  var ctx = canvas.getContext("2d") || <CanvasRenderingContext2D>error("canvas has no 2D context");
+  var img = <HTMLImageElement>document.getElementById("L-blob");
+  ctx.drawImage(img, 0, 0);
+  console.log(collisionDetector.buildPixelMap(canvas));
 };
