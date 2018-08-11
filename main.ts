@@ -252,8 +252,10 @@ window.onload = function() {
       ),
       ([background, [mouse, ...loadedSprites]]) => {
         const rabbitImages = [1,2,3,4].map(i => getPreloadedImage(`images/rabbit${i}.png`));
-        var sprites: (Sprite | null)[] = loadedSprites;
+        const conflictImage = getPreloadedImage("images/controls.png");
+        const movingOnImage = getPreloadedImage("images/controlsNext.png");
 
+        var sprites: (Sprite | null)[] = loadedSprites;
         var spacebarsUsed = 0;
         var currentSpriteNumber = 0;
         var visibleSpriteCount = 0;
@@ -367,6 +369,7 @@ window.onload = function() {
             window.addEventListener("keydown", moveSprite);
 
             addNextSprite();
+            addNextSprite();
           },
           detach: () => {
             gameCanvas.removeEventListener("mousedown", pickSprite);
@@ -376,10 +379,6 @@ window.onload = function() {
           },
           draw: () => {
             g.drawImage(background, 0, 0);
-
-            if (anySpritesCollide()) {
-              g.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-            }
 
             for(var i=0; i<visibleSpriteCount; i++) {
               const sprite = sprites[i];
@@ -395,6 +394,10 @@ window.onload = function() {
 
             const rabbitImage = rabbitImages[spacebarsUsed];
             g.drawImage(rabbitImage, 1050, 143);
+
+            const collision = anySpritesCollide();
+            const controlImage = collision ? conflictImage : movingOnImage;
+            g.drawImage(controlImage, 768, 390);
           }
         };
       }
