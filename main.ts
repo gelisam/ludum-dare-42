@@ -30,6 +30,13 @@ const sequencePromises : <A,B>(loadB: (input: A) => Promise<B>) => (inputs: A[])
 // Image //
 ///////////
 
+// must be one of the images in the <div id="preloader">
+function getPreloadedImage(imageFile: string): HTMLImageElement {
+  const img = new Image();
+  img.src = imageFile;
+  return img;
+}
+
 function loadImage(imageFile: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();

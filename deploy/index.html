@@ -3,10 +3,13 @@
   <head>
     <meta charset="UTF-8">
     <style>
-      #hiddenCanvas {
+      #preloader {
         position: absolute;
         left: -9999px;
         top:  -9999px;
+      }
+      #preloader img {
+        display: block;
       }
 
       audio {
@@ -24,8 +27,11 @@
     <script src="js/main.js"></script>
   </head>
   <body>
-    <canvas id="hiddenCanvas" width="1" height="1"></canvas>
     <center><canvas id="gameCanvas" width="1366" height="768"></canvas></center>
     <!--<audio src="audio/music.ogg" autoplay="true" controls="true" loop="true"></audio>-->
+    <div id="preloader">
+      <canvas id="hiddenCanvas" width="1" height="1"></canvas>
+      <img src="images/1px.png" width="1" height="1" />
+    </div>
   </body>
 </html>
