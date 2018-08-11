@@ -11,24 +11,21 @@ function error<A>(msg: string): A {
 // Image //
 ///////////
 
-function loadImage(src: string): Promise<void> {
+function loadImage(imageFile: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
+    console.log("loading image " + imageFile);
     const img = new Image();
 
-    img.addEventListener("load", () => resolve());
+    img.addEventListener("load", () => {
+      console.log("loaded image " + imageFile);
+      resolve(img)
+    });
     img.addEventListener("error", () => {
-      reject(new Error("Failed to load image " + src));
+      reject(new Error("Failed to load image " + imageFile));
     });
 
-    img.src = src;
+    img.src = imageFile;
   });
-}
-
-// must be one of the images loaded by <div id="preloader"> or loadImage
-function makeImage(src: string): HTMLImageElement {
-  const img = new Image();
-  img.src = src;
-  return img;
 }
 
 
@@ -78,18 +75,18 @@ declare const levels: [Level];
 ////////////////
 
 type GameScreen = {
-  load: () => void,
+  attach: () => void,
   draw: () => void,
-  unload: () => void
+  detach: () => void
 };
 
 var currentGameScreen: GameScreen | null = null;
 
-function loadGameScreen(gameScreen: GameScreen) {
-  if (currentGameScreen) currentGameScreen.unload();
+function attachGameScreen(gameScreen: GameScreen) {
+  if (currentGameScreen) currentGameScreen.detach();
 
   currentGameScreen = gameScreen;
-  currentGameScreen.load();
+  currentGameScreen.attach();
   currentGameScreen.draw();
 }
 
@@ -116,23 +113,49 @@ window.onload = function() {
   // Sprite //
   ////////////
 
-  // must be one of the images loaded by <div id="preloader"> or makeLoadingScreen
-  function loadSprite(src: string): Sprite {
-    const img = makeImage(src);
+  function loadSprite(spriteFile: string): Promise<Sprite> {
+    return loadImage(spriteFile).then(img => {
+      console.log("loading sprite " + spriteFile);
+      return new Promise<HTMLImageElement>((resolve, reject) => {
+        console.log("drawing image " + spriteFile);
+        hiddenCanvas.width  = img.width;
+        hiddenCanvas.height = img.height;
+        hiddenGraphicsContext.clearRect(0, 0, hiddenCanvas.width, hiddenCanvas.height);
+        hiddenGraphicsContext.drawImage(img, 0, 0);
 
-    hiddenCanvas.width  = img.width;
-    hiddenCanvas.height = img.height;
-    hiddenGraphicsContext.clearRect(0, 0, hiddenCanvas.width, hiddenCanvas.height);
-    hiddenGraphicsContext.drawImage(img, 0, 0);
+        // let the browser draw the image before we attempt to read it back
+        setTimeout(() => {
+          console.log("drawn image " + spriteFile);
+          resolve(img);
+        });
+      });
+    }).then(img => {
+      console.log("loading pixelMap " + spriteFile);
+      return {
+        x: 0,
+        y: 0,
+        width: img.width,
+        height: img.height,
+        image: img,
+        pixelMap: collisionDetector.buildPixelMap(hiddenCanvas)
+      };
+    });
+  }
 
-    return {
-      x: 0,
-      y: 0,
-      width: img.width,
-      height: img.height,
-      image: img,
-      pixelMap: collisionDetector.buildPixelMap(hiddenCanvas)
-    };
+  // don't use Promise.all(spriteFiles.map(loadSprite)), or all the promises
+  // will try to use the hiddenCanvas at the same time.
+  function loadSprites(spriteFiles: string[]): Promise<Sprite[]> {
+    // this is sequenceA(loadSprite)
+
+    if (spriteFiles.length == 0) {
+      return Promise.resolve([]);
+    } else {
+      return loadSprite(spriteFiles[0]).then(sprite => {
+        return loadSprites(spriteFiles.slice(1)).then(sprites => {
+          return [sprite].concat(sprites);
+        });
+      });
+    }
   }
 
   function drawSprite(sprite: Sprite) {
@@ -150,14 +173,14 @@ window.onload = function() {
   // loading screen //
   ////////////////////
 
-  function makeLoadingScreen(imageFiles: string[], makeNextScreen: () => GameScreen): GameScreen {
+  function makeLoadingScreen<A>(makePromise: () => Promise<A>, makeNextScreen: (result: A) => GameScreen): GameScreen {
     return {
-      load: () => {
-        Promise.all(imageFiles.map(loadImage)).then(() => {
-          loadGameScreen(makeNextScreen());
+      attach: () => {
+        makePromise().then(result => {
+          attachGameScreen(makeNextScreen(result));
         });
       },
-      unload: () => {},
+      detach: () => {},
       draw: () => {
         g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
         g.font = "30px Arial";
@@ -174,29 +197,30 @@ window.onload = function() {
   // the first level has number 1
   var currentLevelNumber: number | null = null;
 
-  function loadNextLevel() {
+  function attachNextLevel() {
     currentLevelNumber = (currentLevelNumber || 0) + 1;
 
     // the first level is at index 0
     const level: Level | null = levels[currentLevelNumber-1];
 
     if (level) {
-      loadGameScreen(makeLevelScreen(level));
+      attachGameScreen(makeLevelScreen(level));
     } else {
-      loadGameScreen(endScreen);
+      attachGameScreen(endScreen);
     }
   }
 
   function makeLevelScreen(level: Level): GameScreen {
     return makeLoadingScreen(
-      [level.backgroundFile].concat(level.spriteFiles),
-      () => {
-        const mouse = loadSprite("images/1px.png");
-        const background = makeImage(level.backgroundFile);
-        const sprites = level.spriteFiles.map(loadSprite);
-
+      () => Promise.all<HTMLImageElement, Sprite[]>(
+        [
+          loadImage(level.backgroundFile),
+          loadSprites(["images/1px.png"].concat(level.spriteFiles))
+        ]
+      ),
+      ([background, [mouse, ...sprites]]) => {
         var currentSpriteNumber = 0;
-        var loadedSpriteCount = 0;
+        var visibleSpriteCount = 0;
         var picked: {
           sprite: Sprite,
           mouseX: number,
@@ -206,20 +230,20 @@ window.onload = function() {
         } | null = null;
 
         function nextSprite(): Sprite | null {
-          return sprites[loadedSpriteCount];
+          return sprites[visibleSpriteCount];
         }
 
-        function loadNextSprite() {
+        function addNextSprite() {
           const sprite = nextSprite();
 
           if (sprite) {
-            loadedSpriteCount++;
-            currentSpriteNumber = loadedSpriteCount - 1;
+            visibleSpriteCount++;
+            currentSpriteNumber = visibleSpriteCount - 1;
 
             sprite.x = 390 - Math.round(sprite.width  / 2);
             sprite.y = 373 - Math.round(sprite.height / 2);
           } else {
-            loadNextLevel();
+            attachNextLevel();
           }
         }
 
@@ -227,7 +251,7 @@ window.onload = function() {
           mouse.x = event.offsetX;
           mouse.y = event.offsetY;
 
-          for(var i=0; i<loadedSpriteCount; i++) {
+          for(var i=0; i<visibleSpriteCount; i++) {
             const sprite = sprites[i];
             if (spritesCollide(mouse, sprite)) {
               currentSpriteNumber = i;
@@ -261,7 +285,7 @@ window.onload = function() {
           else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") sprite.x -= event.shiftKey ? 8 : 1;
           else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") sprite.y += event.shiftKey ? 8 : 1;
           else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") sprite.x += event.shiftKey ? 8 : 1;
-          else if (event.key === "Enter" && !anySpritesCollide()) loadNextSprite();
+          else if (event.key === "Enter" && !anySpritesCollide()) addNextSprite();
           //else console.log(event.key);
 
           updateGameScreen();
@@ -272,8 +296,8 @@ window.onload = function() {
         }
 
         function anySpritesCollide(): boolean {
-          for(var i=0; i<loadedSpriteCount; i++) {
-            for(var j=i+1; j<loadedSpriteCount; j++) {
+          for(var i=0; i<visibleSpriteCount; i++) {
+            for(var j=i+1; j<visibleSpriteCount; j++) {
               if (spritesCollide(sprites[i], sprites[j])) {
                 return true;
               }
@@ -284,15 +308,15 @@ window.onload = function() {
         }
 
         return {
-          load: () => {
+          attach: () => {
             gameCanvas.addEventListener("mousedown", pickSprite);
             gameCanvas.addEventListener("mousemove", dragSprite);
             gameCanvas.addEventListener("mouseup", releaseSprite);
             window.addEventListener("keydown", moveSprite);
 
-            loadNextSprite();
+            addNextSprite();
           },
-          unload: () => {
+          detach: () => {
             gameCanvas.removeEventListener("mousedown", pickSprite);
             gameCanvas.removeEventListener("mousemove", dragSprite);
             gameCanvas.removeEventListener("mouseup", releaseSprite);
@@ -305,7 +329,7 @@ window.onload = function() {
               g.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
             }
 
-            for(var i=0; i<loadedSpriteCount; i++) {
+            for(var i=0; i<visibleSpriteCount; i++) {
               const sprite = sprites[i];
               drawSprite(sprite);
             }
@@ -321,22 +345,20 @@ window.onload = function() {
   //////////////////
 
   const titleScreen: GameScreen = makeLoadingScreen(
-    ["images/title.png"],
-    () => {
-      const titleImage = makeImage("images/title.png");
-
+    () => loadImage("images/title.png"),
+    img => {
       return {
-        load: () => {
-          gameCanvas.addEventListener("mouseup", loadNextLevel);
-          window.addEventListener("keyup", loadNextLevel);
+        attach: () => {
+          gameCanvas.addEventListener("mouseup", attachNextLevel);
+          window.addEventListener("keyup", attachNextLevel);
         },
-        unload: () => {
-          gameCanvas.removeEventListener("mouseup", loadNextLevel);
-          window.removeEventListener("keyup", loadNextLevel);
+        detach: () => {
+          gameCanvas.removeEventListener("mouseup", attachNextLevel);
+          window.removeEventListener("keyup", attachNextLevel);
         },
         draw: () => {
           g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-          g.drawImage(titleImage, 0, 0);
+          g.drawImage(img, 0, 0);
         }
       };
     }
@@ -348,16 +370,14 @@ window.onload = function() {
   ////////////////
 
   const endScreen: GameScreen = makeLoadingScreen(
-    ["images/the-end.png"],
-    () => {
-      const endImage = makeImage("images/the-end.png");
-
+    () => loadImage("images/the-end.png"),
+    img => {
       return {
-        load: () => {},
-        unload: () => {},
+        attach: () => {},
+        detach: () => {},
         draw: () => {
           g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-          g.drawImage(endImage, 0, 0);
+          g.drawImage(img, 0, 0);
         }
       };
     }
@@ -368,5 +388,5 @@ window.onload = function() {
   // main //
   //////////
 
-  loadGameScreen(titleScreen);
+  attachGameScreen(titleScreen);
 };
