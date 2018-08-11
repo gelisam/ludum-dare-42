@@ -7,6 +7,25 @@ function error<A>(msg: string): A {
 }
 
 
+//////////////
+// Promises //
+//////////////
+
+const sequencePromises : <A,B>(loadB: (input: A) => Promise<B>) => (inputs: A[]) => Promise<B[]>
+                       = <A,B>(loadB: (input: A) => Promise<B>) => (inputs: A[]) =>
+{
+  if (inputs.length == 0) {
+    return Promise.resolve([]);
+  } else {
+    return loadB(inputs[0]).then(output => {
+      return sequencePromises(loadB)(inputs.slice(1)).then(outputs => {
+        return [output].concat(outputs);
+      });
+    });
+  }
+}
+
+
 ///////////
 // Image //
 ///////////
@@ -113,49 +132,41 @@ window.onload = function() {
   // Sprite //
   ////////////
 
-  function loadSprite(spriteFile: string): Promise<Sprite> {
-    return loadImage(spriteFile).then(img => {
-      console.log("loading sprite " + spriteFile);
-      return new Promise<HTMLImageElement>((resolve, reject) => {
-        console.log("drawing image " + spriteFile);
-        hiddenCanvas.width  = img.width;
-        hiddenCanvas.height = img.height;
-        hiddenGraphicsContext.clearRect(0, 0, hiddenCanvas.width, hiddenCanvas.height);
-        hiddenGraphicsContext.drawImage(img, 0, 0);
+  function loadSpriteFromImage(img: HTMLImageElement): Promise<Sprite> {
+    console.log("loading sprite " + img.src);
+    return new Promise((resolve, reject) => {
+      console.log("drawing image " + img.src);
+      hiddenCanvas.width  = img.width;
+      hiddenCanvas.height = img.height;
+      hiddenGraphicsContext.clearRect(0, 0, hiddenCanvas.width, hiddenCanvas.height);
+      hiddenGraphicsContext.drawImage(img, 0, 0);
 
-        // let the browser draw the image before we attempt to read it back
-        setTimeout(() => {
-          console.log("drawn image " + spriteFile);
-          resolve(img);
+      // let the browser draw the image before we attempt to read it back
+      setTimeout(() => {
+        console.log("drawn image " + img.src);
+        console.log("loading pixelMap " + img.src + " size: " + img.width + "x" + img.height);
+        const pixelMap = collisionDetector.buildPixelMap(hiddenCanvas);
+        console.log("loaded pixelMap " + img.src);
+        resolve({
+          x: 0,
+          y: 0,
+          width: img.width,
+          height: img.height,
+          image: img,
+          pixelMap: pixelMap
         });
       });
-    }).then(img => {
-      console.log("loading pixelMap " + spriteFile);
-      return {
-        x: 0,
-        y: 0,
-        width: img.width,
-        height: img.height,
-        image: img,
-        pixelMap: collisionDetector.buildPixelMap(hiddenCanvas)
-      };
     });
+  }
+
+  function loadSprite(spriteFile: string): Promise<Sprite> {
+    return loadImage(spriteFile).then(loadSpriteFromImage);
   }
 
   // don't use Promise.all(spriteFiles.map(loadSprite)), or all the promises
   // will try to use the hiddenCanvas at the same time.
   function loadSprites(spriteFiles: string[]): Promise<Sprite[]> {
-    // this is sequenceA(loadSprite)
-
-    if (spriteFiles.length == 0) {
-      return Promise.resolve([]);
-    } else {
-      return loadSprite(spriteFiles[0]).then(sprite => {
-        return loadSprites(spriteFiles.slice(1)).then(sprites => {
-          return [sprite].concat(sprites);
-        });
-      });
-    }
+    return Promise.all(spriteFiles.map(loadImage)).then(sequencePromises(loadSpriteFromImage));
   }
 
   function drawSprite(sprite: Sprite) {
