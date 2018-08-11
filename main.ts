@@ -46,6 +46,19 @@ declare function collisionDetection(): CollisionDetector;
 const collisionDetector = collisionDetection();
 
 
+////////////
+// levels //
+////////////
+
+// type definitions for levels.js
+
+type Level = {
+  spriteFiles: [string]
+}
+
+declare const levels: [Level];
+
+
 ////////////////
 // GameScreen //
 ////////////////
@@ -121,9 +134,20 @@ window.onload = function() {
   // level screen //
   //////////////////
 
-  const levelScreen: GameScreen = (() => {
+  // the first level has number 1
+  var currentLevelNumber: number | null = null;
+
+  function loadNextLevel() {
+    currentLevelNumber = (currentLevelNumber || 0) + 1;
+    console.log("loading level " + currentLevelNumber);
+
+    // the first level is at index 0
+    loadGameScreen(loadLevel(levels[currentLevelNumber-1]));
+  }
+
+  function loadLevel(level: Level): GameScreen {
     const mouse = loadSprite("images/1px.png");
-    const sprites = [loadSprite("images/tape.png"), loadSprite("images/scissors.png")];
+    const sprites = level.spriteFiles.map(loadSprite);
 
     var picked: {
       sprite: Sprite,
@@ -147,8 +171,10 @@ window.onload = function() {
             spriteY: sprite.y
           };
         }
-        return;
       });
+
+      // temporary hack: click on the background when none of the sprites collide to move to the next level
+      if (!picked && !anySpritesCollide()) loadNextLevel();
     }
 
     function moveSprite(event: MouseEvent) {
@@ -167,6 +193,18 @@ window.onload = function() {
       picked = null;
     }
 
+    function anySpritesCollide(): boolean {
+      for(var i=0; i<sprites.length; i++) {
+        for(var j=i+1; j<sprites.length; j++) {
+          if (spritesCollide(sprites[i], sprites[j])) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
     return {
       load: () => {
         gameCanvas.addEventListener("mousedown", pickSprite);
@@ -181,12 +219,8 @@ window.onload = function() {
       draw: () => {
         g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
 
-        for(var i=0; i<sprites.length; i++) {
-          for(var j=i+1; j<sprites.length; j++) {
-            if (spritesCollide(sprites[i], sprites[j])) {
-              g.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-            }
-          }
+        if (anySpritesCollide()) {
+          g.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
         }
 
         sprites.forEach(sprite => {
@@ -194,7 +228,7 @@ window.onload = function() {
         });
       }
     };
-  })();
+  }
 
 
   //////////////////
@@ -204,16 +238,12 @@ window.onload = function() {
   const titleScreen: GameScreen = (() => {
     const titleSprite = loadSprite("images/title.png");
 
-    function nextScreen() {
-      loadGameScreen(levelScreen);
-    }
-
     return {
       load: () => {
-        gameCanvas.addEventListener("mouseup", nextScreen);
+        gameCanvas.addEventListener("mouseup", loadNextLevel);
       },
       unload: () => {
-        gameCanvas.removeEventListener("mouseup", nextScreen);
+        gameCanvas.removeEventListener("mouseup", loadNextLevel);
       },
       draw: () => {
         g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
