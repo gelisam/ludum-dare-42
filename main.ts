@@ -1,3 +1,7 @@
+///////////
+// Maybe //
+///////////
+
 type Nothing = {
   ctor: "Nothing",
 };
@@ -12,6 +16,10 @@ function Just<A>(value: A): Just<A> {
   return {ctor: "Just", value: value};
 }
 
+
+//////////
+// main //
+//////////
 
 window.onload = function() {
 };
