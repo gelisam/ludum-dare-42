@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "outDir": "deploy/js",
+        "target": "es2015",
+
+        "alwaysStrict": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "strictFunctionTypes": true,
+        "strictNullChecks": true,
+        "strictPropertyInitialization": true
+    },
+    "files": ["main.ts"]
+}
