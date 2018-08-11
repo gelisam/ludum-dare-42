@@ -188,7 +188,8 @@ window.onload = function() {
       draw: () => {
         g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
         g.font = "30px Arial";
-        g.fillText("Loading...", gameCanvas.width / 2 - 50, gameCanvas.height / 2);
+        g.textAlign = "center";
+        g.fillText("Loading...", gameCanvas.width / 2, gameCanvas.height / 2);
       }
     };
   }
