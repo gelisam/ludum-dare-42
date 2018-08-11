@@ -32,11 +32,9 @@ const sequencePromises : <A,B>(loadB: (input: A) => Promise<B>) => (inputs: A[])
 
 function loadImage(imageFile: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    console.log("loading image " + imageFile);
     const img = new Image();
 
     img.addEventListener("load", () => {
-      console.log("loaded image " + imageFile);
       resolve(img)
     });
     img.addEventListener("error", () => {
@@ -133,9 +131,7 @@ window.onload = function() {
   ////////////
 
   function loadSpriteFromImage(img: HTMLImageElement): Promise<Sprite> {
-    console.log("loading sprite " + img.src);
     return new Promise((resolve, reject) => {
-      console.log("drawing image " + img.src);
       hiddenCanvas.width  = img.width;
       hiddenCanvas.height = img.height;
       hiddenGraphicsContext.clearRect(0, 0, hiddenCanvas.width, hiddenCanvas.height);
@@ -143,10 +139,7 @@ window.onload = function() {
 
       // let the browser draw the image before we attempt to read it back
       setTimeout(() => {
-        console.log("drawn image " + img.src);
-        console.log("loading pixelMap " + img.src + " size: " + img.width + "x" + img.height);
         const pixelMap = collisionDetector.buildPixelMap(hiddenCanvas);
-        console.log("loaded pixelMap " + img.src);
         resolve({
           x: 0,
           y: 0,
