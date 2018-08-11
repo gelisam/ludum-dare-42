@@ -12,6 +12,12 @@
         display: block;
       }
 
+      audio {
+        position: absolute;
+        bottom: 0px;
+        right: 0px;
+      }
+
       canvas {
         border: 1px solid black;
       }
@@ -22,6 +28,7 @@
   </head>
   <body>
     <center><canvas id="gameCanvas" width="824" height="580"></canvas></center>
+    <audio src="audio/music.ogg" autoplay="true" controls="true" loop="true"></audio>
     <div id="preloader">
       <canvas id="hiddenCanvas" width="1" height="1"></canvas>
       <img src="images/title.png" width="1" height="1" />
