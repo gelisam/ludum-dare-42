@@ -438,20 +438,47 @@ window.onload = function() {
   //////////////////
 
   const titleScreen: GameScreen = makeLoadingScreen(
-    () => loadImage("images/title.png"),
-    img => {
+    () => Promise.all<HTMLImageElement, Sprite[]>(
+      [
+        loadImage("images/title.png"),
+        loadSprites(["images/1px.png", "images/playButton.png", "images/storyButton.png"])
+      ]
+    ),
+    ([bg, [mouse, playButton, storyButton]]) => {
+      playButton.x = 30;
+      playButton.y = 512;
+      storyButton.x = 30;
+      storyButton.y = 640;
+
+      function displayStory() {
+        alert("You're a hoarder");
+      }
+
+      function clickButton(event: MouseEvent) {
+        mouse.x = event.offsetX;
+        mouse.y = event.offsetY;
+
+        if      (spritesCollide(mouse, playButton)) attachNextLevel();
+        else if (spritesCollide(mouse, storyButton)) displayStory();
+      }
+
+      function typeButton(event: KeyboardEvent) {
+        if (event.key === "Enter") attachNextLevel();
+      }
+
       return {
         attach: () => {
-          gameCanvas.addEventListener("mouseup", attachNextLevel);
-          window.addEventListener("keyup", attachNextLevel);
+          gameCanvas.addEventListener("mouseup", clickButton);
+          window.addEventListener("keyup", typeButton);
         },
         detach: () => {
-          gameCanvas.removeEventListener("mouseup", attachNextLevel);
-          window.removeEventListener("keyup", attachNextLevel);
+          gameCanvas.removeEventListener("mouseup", clickButton);
+          window.removeEventListener("keyup", typeButton);
         },
         draw: () => {
-          g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-          g.drawImage(img, 0, 0);
+          g.drawImage(bg, 0, 0);
+          drawSprite(playButton);
+          drawSprite(storyButton);
         }
       };
     }
@@ -464,13 +491,12 @@ window.onload = function() {
 
   const endScreen: GameScreen = makeLoadingScreen(
     () => loadImage("images/the-end.png"),
-    img => {
+    bg => {
       return {
         attach: () => {},
         detach: () => {},
         draw: () => {
-          g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-          g.drawImage(img, 0, 0);
+          g.drawImage(bg, 0, 0);
         }
       };
     }
