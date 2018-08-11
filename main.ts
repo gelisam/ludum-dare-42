@@ -251,6 +251,9 @@ window.onload = function() {
         ]
       ),
       ([background, [mouse, ...sprites]]) => {
+        const rabbitImages = [1,2,3,4].map(i => getPreloadedImage(`images/rabbit${i}.png`));
+
+        var spacebarsUsed = 0;
         var currentSpriteNumber = 0;
         var visibleSpriteCount = 0;
         var picked: {
@@ -366,10 +369,13 @@ window.onload = function() {
               drawSprite(sprite);
             }
 
-            let nextSprite: Sprite | null = findNextSprite();
+            const nextSprite: Sprite | null = findNextSprite();
             if (nextSprite) {
               drawImageInsideBox(g, nextSprite.image, 778, 202, 240, 155);
             }
+
+            const rabbitImage = rabbitImages[spacebarsUsed];
+            g.drawImage(rabbitImage, 1050, 143);
           }
         };
       }
