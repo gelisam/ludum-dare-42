@@ -35,7 +35,7 @@ function collisionDetection() {
 	 */
 	this.hitTest = function( source, target ) {
 		var hit = false;
-		var start = new Date().getTime();
+		//var start = new Date().getTime();
 
 		if( this.boxHitTest( source, target ) ) {
 			if( this.pixelHitTest( source, target ) ) {
@@ -43,11 +43,11 @@ function collisionDetection() {
 			}
 		}
 
-		var end = new Date().getTime();
+		//var end = new Date().getTime();
 
-		if( hit == true ){
-			//console.log( 'detection took: ' + (end - start) + 'ms' );
-		}
+		//if( hit == true ){
+		//	console.log( 'detection took: ' + (end - start) + 'ms' );
+		//}
 
 		return hit;
 	}
