@@ -122,34 +122,76 @@ window.onload = function() {
   //////////////////
 
   const levelScreen: GameScreen = (() => {
-    const staticSprite = loadSprite("images/tape.png");
-    const movingSprite = loadSprite("images/scissors.png");
-    staticSprite.x = 100;
-    staticSprite.y = 100;
-    movingSprite.x = 100;
-    movingSprite.y = 100;
+    const mouse = loadSprite("images/1px.png");
+    const sprites = [loadSprite("images/tape.png"), loadSprite("images/scissors.png")];
+
+    var picked: {
+      sprite: Sprite,
+      mouseX: number,
+      mouseY: number,
+      spriteX: number,
+      spriteY: number
+    } | null = null;
+
+    function pickSprite(event: MouseEvent) {
+      mouse.x = event.offsetX;
+      mouse.y = event.offsetY;
+
+      sprites.forEach(sprite => {
+        if (spritesCollide(mouse, sprite)) {
+          picked = {
+            sprite: sprite,
+            mouseX: mouse.x,
+            mouseY: mouse.y,
+            spriteX: sprite.x,
+            spriteY: sprite.y
+          };
+        }
+        return;
+      });
+    }
 
     function moveSprite(event: MouseEvent) {
-      movingSprite.x = event.offsetX;
-      movingSprite.y = event.offsetY;
+      if (picked) {
+        mouse.x = event.offsetX;
+        mouse.y = event.offsetY;
 
-      updateGameScreen();
+        picked.sprite.x = mouse.x - picked.mouseX + picked.spriteX;
+        picked.sprite.y = mouse.y - picked.mouseY + picked.spriteY;
+
+        updateGameScreen();
+      }
+    }
+
+    function releaseSprite(event: MouseEvent) {
+      picked = null;
     }
 
     return {
       load: () => {
+        gameCanvas.addEventListener("mousedown", pickSprite);
         gameCanvas.addEventListener("mousemove", moveSprite);
+        gameCanvas.addEventListener("mouseup", releaseSprite);
       },
       unload: () => {
+        gameCanvas.removeEventListener("mousedown", pickSprite);
         gameCanvas.removeEventListener("mousemove", moveSprite);
+        gameCanvas.removeEventListener("mouseup", releaseSprite);
       },
       draw: () => {
         g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
 
-        drawSprite(staticSprite);
-        if (!spritesCollide(staticSprite, movingSprite)) {
-          drawSprite(movingSprite);
+        for(var i=0; i<sprites.length; i++) {
+          for(var j=i+1; j<sprites.length; j++) {
+            if (spritesCollide(sprites[i], sprites[j])) {
+              g.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+            }
+          }
         }
+
+        sprites.forEach(sprite => {
+          drawSprite(sprite);
+        });
       }
     };
   })();
