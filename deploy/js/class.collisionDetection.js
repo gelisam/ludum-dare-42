@@ -73,11 +73,11 @@ function collisionDetection() {
 	 *
 	 */
 	this.boxHitTest = function( source, target ) {
-		return !( 
+		return !(
 			( ( source.y + source.height ) < ( target.y ) ) ||
 			( source.y > ( target.y + target.height ) ) ||
 			( ( source.x + source.width ) < target.x ) ||
-			( source.x > ( target.x + target.width ) ) 
+			( source.x > ( target.x + target.width ) )
 		);
 	}
 
@@ -114,14 +114,19 @@ function collisionDetection() {
             {
                 for (var x = left; x < right; x++)
                 {
-                	var pixel1 = source.pixelMap.data[ (x - source.x) +"_"+ (y - source.y) ];
-                	var pixel2 = target.pixelMap.data[ (x - target.x) +"_"+ (y - target.y) ];
 
-                	if( !pixel1 || !pixel2 ) {
-                		continue;
-                	};
-                	
-                    if (pixel1.pixelData[3] == 255 && pixel2.pixelData[3] == 255)
+                    var sourceX = x - source.x;
+                    var sourceY = y - source.y;
+                    var targetX = x - target.x;
+                    var targetY = y - target.y;
+
+                    if (sourceX < 0 || sourceX >= source.width || sourceY < 0 || sourceY >= source.height) continue;
+                    if (targetX < 0 || targetX >= target.width || targetY < 0 || targetY >= target.height) continue;
+
+                    var sourcePixel = source.pixelMap[ sourceY * source.width * 4 + sourceX * 4 + 3 ];
+                    var targetPixel = target.pixelMap[ targetY * target.width * 4 + targetX * 4 + 3 ];
+
+                    if (sourcePixel == 255 && targetPixel == 255)
                     {
                         return true;
                     }
@@ -136,35 +141,15 @@ function collisionDetection() {
 	 *
 	 * Creates a pixel map on a canvas image. Everything
 	 * with a opacity above 0 is treated as a collision point.
-	 * Lower resolution (higher number) will generate a faster
-	 * but less accurate map.
-	 *
 	 *
 	 * @param source (Object) The canvas object
-	 * @param resolution (int)(DEPRECATED!) The resolution of the map
 	 *
-	 * @return object, a pixelMap object
+	 * @return the pixelMap (a Uint8ClampedArray with 4 bytes per pixels)
 	 *
 	 */
 	this.buildPixelMap = function( source ) {
-		var resolution = 1;
 		var ctx = source.getContext("2d");
-		var pixelMap = [];
-
-		for( var y = 0; y < source.height; y++) {
-			for( var x = 0; x < source.width; x++ ) {
-				var dataRowColOffset = x+"_"+y;//((y * source.width) + x);
-				var pixel = ctx.getImageData(x,y,resolution,resolution);
-				var pixelData = pixel.data;
-
-				pixelMap[dataRowColOffset] = { x:x, y:y, pixelData: pixelData };
-
-			}
-		}
-		return {
-			data: pixelMap,
-			resolution: resolution
-		};
+                return ctx.getImageData(0,0,source.width,source.height).data;
 	}
 
 	// Initialize the collider
