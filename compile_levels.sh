@@ -5,6 +5,7 @@ set -e
 #
 #   var levels = [
 #     {
+#       backgroundFile: "images/levels/1/background.png",
 #       spriteFiles: [
 #         "images/levels/1/L-blob.png",
 #         "images/levels/1/J-blob.png"
@@ -21,8 +22,9 @@ set -e
   echo "var levels = ["
   for LEVEL in `ls "deploy/images/levels" | sort -n`; do
     echo "  {"
+    echo "    backgroundFile: \"images/levels/$LEVEL/background.png\","
     echo "    spriteFiles: ["
-    for SPRITE in `ls "deploy/images/levels/$LEVEL"`; do
+    for SPRITE in `ls "deploy/images/levels/$LEVEL" | grep -v '^background.png$'`; do
       echo "      \"images/levels/$LEVEL/$SPRITE\","
     done
     echo "    ]"

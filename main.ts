@@ -53,6 +53,7 @@ const collisionDetector = collisionDetection();
 // type definitions for levels.js
 
 type Level = {
+  backgroundFile: string,
   spriteFiles: [string]
 }
 
@@ -152,6 +153,7 @@ window.onload = function() {
 
   function loadLevel(level: Level): GameScreen {
     const mouse = loadSprite("images/1px.png");
+    const background = image(level.backgroundFile);
     const sprites = level.spriteFiles.map(loadSprite);
 
     var currentSpriteNumber = 0;
@@ -175,8 +177,8 @@ window.onload = function() {
         loadedSpriteCount++;
         currentSpriteNumber = loadedSpriteCount - 1;
 
-        sprite.x = Math.round((gameCanvas.width - sprite.width) / 2);
-        sprite.y = Math.round((gameCanvas.height - sprite.height) / 2);
+        sprite.x = 390 - Math.round(sprite.width  / 2);
+        sprite.y = 373 - Math.round(sprite.height / 2);
       } else {
         loadNextLevel();
       }
@@ -258,7 +260,7 @@ window.onload = function() {
         window.removeEventListener("keydown", moveSprite);
       },
       draw: () => {
-        g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+        g.drawImage(background, 0, 0);
 
         if (anySpritesCollide()) {
           g.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
