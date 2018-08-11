@@ -117,8 +117,8 @@ window.onload = function() {
   //////////
 
   g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-  const staticBlob = loadSprite("images/L-blob.png");
-  const movingBlob = loadSprite("images/J-blob.png");
+  const staticBlob = loadSprite("images/tape.png");
+  const movingBlob = loadSprite("images/scissors.png");
 
   function drawScene() {
     g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
