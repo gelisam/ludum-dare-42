@@ -155,6 +155,7 @@ window.onload = function() {
     const sprites = level.spriteFiles.map(loadSprite);
 
     var currentSpriteNumber = 0;
+    var loadedSpriteCount = 0;
     var picked: {
       sprite: Sprite,
       mouseX: number,
@@ -163,11 +164,20 @@ window.onload = function() {
       spriteY: number
     } | null = null;
 
+    function loadNextSprite() {
+      loadedSpriteCount++;
+      currentSpriteNumber = loadedSpriteCount - 1;
+
+      if (!sprites[currentSpriteNumber]) {
+        loadNextLevel();
+      }
+    }
+
     function pickSprite(event: MouseEvent) {
       mouse.x = event.offsetX;
       mouse.y = event.offsetY;
 
-      for(var i=0; i<sprites.length; i++) {
+      for(var i=0; i<loadedSpriteCount; i++) {
         const sprite = sprites[i];
         if (spritesCollide(mouse, sprite)) {
           currentSpriteNumber = i;
@@ -180,9 +190,6 @@ window.onload = function() {
           };
         }
       }
-
-      // temporary hack: click on the background when none of the sprites collide to move to the next level
-      if (!picked && !anySpritesCollide()) loadNextLevel();
     }
 
     function dragSprite(event: MouseEvent) {
@@ -204,6 +211,7 @@ window.onload = function() {
       else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") sprite.x -= event.shiftKey ? 8 : 1;
       else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") sprite.y += event.shiftKey ? 8 : 1;
       else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") sprite.x += event.shiftKey ? 8 : 1;
+      else if (event.key === "Enter" && !anySpritesCollide()) loadNextSprite();
       //else console.log(event.key);
 
       updateGameScreen();
@@ -214,8 +222,8 @@ window.onload = function() {
     }
 
     function anySpritesCollide(): boolean {
-      for(var i=0; i<sprites.length; i++) {
-        for(var j=i+1; j<sprites.length; j++) {
+      for(var i=0; i<loadedSpriteCount; i++) {
+        for(var j=i+1; j<loadedSpriteCount; j++) {
           if (spritesCollide(sprites[i], sprites[j])) {
             return true;
           }
@@ -231,6 +239,8 @@ window.onload = function() {
         gameCanvas.addEventListener("mousemove", dragSprite);
         gameCanvas.addEventListener("mouseup", releaseSprite);
         window.addEventListener("keydown", moveSprite);
+
+        loadNextSprite();
       },
       unload: () => {
         gameCanvas.removeEventListener("mousedown", pickSprite);
@@ -245,9 +255,10 @@ window.onload = function() {
           g.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
         }
 
-        sprites.forEach(sprite => {
+        for(var i=0; i<loadedSpriteCount; i++) {
+          const sprite = sprites[i];
           drawSprite(sprite);
-        });
+        }
       }
     };
   }
