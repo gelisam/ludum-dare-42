@@ -555,6 +555,9 @@ window.onload = function() {
                 rspriteIntersectsOutsideBounds(itemI, 54, 54, 725, 725, addCollisionPoint);
                 collisionTimeout = setTimeout(() => innerLoop(i, itemI, i+1));
                 return;
+              } else {
+                collisionTimeout = setTimeout(() => outerLoop(i+1));
+                return;
               }
             }
 
