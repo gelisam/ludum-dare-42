@@ -474,7 +474,7 @@ window.onload = function() {
         var spacebarsUsed = initialSpacebarsUsed;
 
         var currentResponseImage: HTMLImageElement | null = null;
-        var responseTimeout: number | null = null;
+        var responseRequest: number | null = null;
 
         var currentItemNumber = 0;
         var visibleItemCount = 0;
@@ -489,7 +489,7 @@ window.onload = function() {
 
         var collisions: Point[] | null = null;
         var lastCollisions: Point[] = [];
-        var collisionTimeout: number | null = null;
+        var collisionRequest: number | null = null;
 
         var pressingQ = false;
         var pressingW = false;
@@ -505,8 +505,8 @@ window.onload = function() {
         function resetCollisions() {
           collisions = null;
 
-          if (collisionTimeout !== null) clearTimeout(collisionTimeout);
-          collisionTimeout = setTimeout(findCollisions);
+          if (collisionRequest !== null) clearTimeout(collisionRequest);
+          collisionRequest = setTimeout(findCollisions);
         }
 
         //function anyItemsCollide(): boolean {
@@ -540,7 +540,7 @@ window.onload = function() {
           function displayCollisionPoints() {
             collisions = collisionPoints;
             lastCollisions = collisionPoints;
-            collisionTimeout = null;
+            collisionRequest = null;
             updateGameScreen();
           }
 
@@ -553,10 +553,10 @@ window.onload = function() {
               const itemI = items[i];
               if (itemI) {
                 rspriteIntersectsOutsideBounds(itemI, 54, 54, 725, 725, addCollisionPoint);
-                collisionTimeout = setTimeout(() => innerLoop(i, itemI, i+1));
+                collisionRequest = setTimeout(() => innerLoop(i, itemI, i+1));
                 return;
               } else {
-                collisionTimeout = setTimeout(() => outerLoop(i+1));
+                collisionRequest = setTimeout(() => outerLoop(i+1));
                 return;
               }
             }
@@ -568,11 +568,11 @@ window.onload = function() {
             if (j < visibleItemCount) {
               const itemJ = items[j];
               if (itemJ) rspritesIntersect(itemI, itemJ, addCollisionPoint);
-              collisionTimeout = setTimeout(() => innerLoop(i, itemI, j+1));
+              collisionRequest = setTimeout(() => innerLoop(i, itemI, j+1));
               return;
             }
 
-            collisionTimeout = setTimeout(() => outerLoop(i+1));
+            collisionRequest = setTimeout(() => outerLoop(i+1));
           }
 
           for(var i=0; i<visibleItemCount; i++) {
@@ -585,17 +585,17 @@ window.onload = function() {
             }
           }
 
-          collisionTimeout = setTimeout(() => outerLoop(0));
+          collisionRequest = setTimeout(() => outerLoop(0));
         }
 
         function giveItemAway() {
           currentResponseImage = responseImages[spacebarsUsed];
 
-          if (responseTimeout !== null) clearTimeout(responseTimeout);
-          responseTimeout = setTimeout(
+          if (responseRequest !== null) clearTimeout(responseRequest);
+          responseRequest = setTimeout(
             () => {
               currentResponseImage = null;
-              responseTimeout = null;
+              responseRequest = null;
 
               updateGameScreen();
             }, 2000
@@ -781,8 +781,8 @@ window.onload = function() {
             window.removeEventListener("keydown", keyDown);
             window.removeEventListener("keyup", keyUp);
 
-            if (collisionTimeout !== null) clearTimeout(collisionTimeout);
-            if (responseTimeout  !== null) clearTimeout(responseTimeout);
+            if (collisionRequest !== null) clearTimeout(collisionRequest);
+            if (responseRequest  !== null) clearTimeout(responseRequest);
           },
           draw: () => {
             g.drawImage(background, 0, 0);
