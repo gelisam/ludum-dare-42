@@ -964,14 +964,17 @@ window.onload = function() {
               drawCenteredImage(g, currentResponseImage, 1178, 377);
             }
 
-            const helpImage = (lastCollisions.length == 0 && findNextItem() === null) ? movingOnImage : controlsImage;
-            g.drawImage(helpImage, 768, 390);
+            if (lastCollisions.length == 0 && findNextItem() === null) {
+              g.drawImage(movingOnImage, 768, 390);
+            } else {
+              g.drawImage(controlsImage, 768, 390);
 
-            if (spacebarsUsed == rabbitImages.length - 1) {
-              g.drawImage(spaceDisabledImage, 1034, 517);
-            }
-            if (lastCollisions.length !== 0) {
-              g.drawImage(enterDisabledImage, 1137, 577);
+              if (spacebarsUsed == rabbitImages.length - 1) {
+                g.drawImage(spaceDisabledImage, 1034, 517);
+              }
+              if (lastCollisions.length !== 0) {
+                g.drawImage(enterDisabledImage, 1137, 577);
+              }
             }
 
             for(var i=0; i<visibleItemCount; i++) {
