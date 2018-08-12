@@ -569,7 +569,7 @@ window.onload = function() {
       storyButton.y = 640;
 
       function displayStory() {
-        alert("You're a hoarder");
+        attachGameScreen(storyScreen);
       }
 
       function hoverOverButton(event: MouseEvent) {
@@ -615,6 +615,34 @@ window.onload = function() {
           g.drawImage(bg, 0, 0);
           drawSprite(playButton);
           drawSprite(storyButton);
+        }
+      };
+    }
+  );
+
+
+  //////////////////
+  // story screen //
+  //////////////////
+
+  const storyScreen: GameScreen = makeLoadingScreen(
+    () => loadImage("images/story.png"),
+    bg => {
+      function returnToTitleScreen() {
+        attachGameScreen(titleScreen);
+      }
+
+      return {
+        attach: () => {
+          gameCanvas.addEventListener("mouseup", returnToTitleScreen);
+          window.addEventListener("keyup", returnToTitleScreen);
+        },
+        detach: () => {
+          gameCanvas.removeEventListener("mouseup", returnToTitleScreen);
+          window.removeEventListener("keyup", returnToTitleScreen);
+        },
+        draw: () => {
+          g.drawImage(bg, 0, 0);
         }
       };
     }
