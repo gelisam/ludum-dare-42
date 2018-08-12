@@ -441,7 +441,7 @@ window.onload = function() {
   //////////////////
 
   // the first level has number 1
-  function attachNextLevel(levelNumber: number, spacebarsUsed: number) {
+  function attachLevel(levelNumber: number, spacebarsUsed: number) {
     // the first level is at index 0
     const level: Level | null = levels[levelNumber-1];
 
@@ -490,6 +490,10 @@ window.onload = function() {
         var collisions: Point[] | null = null;
         var lastCollisions: Point[] = [];
         var collisionTimeout: number | null = null;
+
+        function restartLevel() {
+          attachLevel(levelNumber, initialSpacebarsUsed);
+        }
 
         function resetCollisions() {
           collisions = null;
@@ -611,7 +615,7 @@ window.onload = function() {
 
             resetCollisions();
           } else {
-            attachNextLevel(levelNumber+1, spacebarsUsed);
+            attachLevel(levelNumber+1, spacebarsUsed);
           }
         }
 
@@ -699,6 +703,7 @@ window.onload = function() {
           if      (event.key === "Enter" && collisions && collisions.length === 0) addNextItem();
           else if (event.key === " ") giveItemAway();
           else if (event.key === "Tab") selectAnotherItem();
+          else if (event.key.toLowerCase() === "r") restartLevel();
           else {
             handled = false;
             //console.log(event.key);
@@ -804,7 +809,7 @@ window.onload = function() {
       storyButton.y = 640;
 
       function play() {
-        attachNextLevel(1, 0);
+        attachLevel(1, 0);
       }
 
       function displayStory() {
