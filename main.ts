@@ -100,11 +100,13 @@ function makePixelMapFromCanvas(canvas: HTMLCanvasElement) {
   const width = canvas.width;
   const height = canvas.height;
   const imageData = getCanvasContext(canvas).getImageData(0, 0, width, height).data;
-  return (x: number, y: number) => imageData[ y * width * 4 + x * 4 + 3 ] == 255;
-}
-
-function pixelMapAt(pixelMap: PixelMap, x: number, y: number): PixelMap {
-  return (i, j) => pixelMap(i-x, j-y);
+  return (x: number, y: number) => (
+    x >= 0 &&
+    x < width &&
+    y >= 0 &&
+    y < height &&
+    imageData[ y * width * 4 + x * 4 + 3 ] == 255
+  );
 }
 
 function pixelMapContainsPoint(pixelMap: PixelMap, x: number, y: number): boolean {
@@ -150,7 +152,7 @@ type Sprite = {
 };
 
 function spritePixelMap(sprite: Sprite): PixelMap {
-  return pixelMapAt(sprite.localPixelMap, sprite.x, sprite.y);
+  return (x: number, y: number) => sprite.localPixelMap(x - sprite.x, y - sprite.y);
 }
 
 function spriteContainsPoint(sprite: Sprite, x: number, y: number) {
@@ -223,6 +225,88 @@ function spritesCollide(sprite1: Sprite, sprite2: Sprite): boolean {
     );
   }
 }
+
+
+/////////////////////////////////
+// rotatable sprite collisions //
+/////////////////////////////////
+
+type RSprite = {
+  x: number, // center
+  y: number,
+  radius: number,
+  rotation: number, // degrees, clockwise
+  localSprite: Sprite, // doesn't change when rsprite.x, rsprite.y, and rsprite.rotation do
+};
+
+function makeRSpriteFromSprite(sprite: Sprite): RSprite {
+  return {
+    x: sprite.x + Math.round(sprite.width / 2),
+    y: sprite.y + Math.round(sprite.height / 2),
+    radius: Math.sqrt(sprite.width*sprite.width + sprite.height*sprite.height) / 2,
+    rotation: 0,
+    localSprite: sprite
+  };
+}
+
+function rspriteSprite(rsprite: RSprite): Sprite {
+  return {
+    x: Math.round(rsprite.x - rsprite.radius),
+    y: Math.round(rsprite.y - rsprite.radius),
+    width:  Math.round(rsprite.radius * 2),
+    height: Math.round(rsprite.radius * 2),
+    image: rsprite.localSprite.image,
+    localPixelMap: (x: number, y: number) => {
+      const relX = x - rsprite.radius;
+      const relY = rsprite.radius - y; // +Y up
+
+      const rad = rsprite.rotation * Math.PI / 180;
+      const rotX = Math.cos(rad) * relX - Math.sin(rad) * relY;
+      const rotY = Math.sin(rad) * relX + Math.cos(rad) * relY;
+
+      const absX = Math.round(rsprite.localSprite.width / 2 + rotX);
+      const absY = Math.round(rsprite.localSprite.height / 2 - rotY);  // +Y down
+
+      return rsprite.localSprite.localPixelMap(absX, absY);
+    }
+  };
+}
+
+function rspriteContainsPoint(rsprite: RSprite, x: number, y: number) {
+  const dx = x - rsprite.x;
+  const dy = y - rsprite.y;
+  const r = rsprite.radius;
+
+  if (dx*dx + dy*dy > r*r) {
+    return false;
+  } else {
+    return spriteContainsPoint(rspriteSprite(rsprite), x, y);
+  }
+}
+
+function rspriteCollidesWithBounds(rsprite: RSprite, left: number, top: number, right: number, bottom: number): boolean {
+  return spriteCollidesWithBounds(rspriteSprite(rsprite), left, top, right, bottom);
+}
+
+function rspriteFitsInsideBounds(rsprite: RSprite, left: number, top: number, right: number, bottom: number): boolean {
+  return spriteFitsInsideBounds(rspriteSprite(rsprite), left, top, right, bottom);
+}
+
+function rspritesCollide(rsprite1: RSprite, rsprite2: RSprite): boolean {
+  const dx = rsprite2.x - rsprite1.x;
+  const dy = rsprite2.y - rsprite1.y;
+  const r = rsprite1.radius + rsprite2.radius;
+
+  if (dx*dx + dy*dy > r*r) {
+    return false;
+  } else {
+    return spritesCollide(
+      rspriteSprite(rsprite1),
+      rspriteSprite(rsprite2)
+    );
+  }
+}
+
 
 
 ////////////
@@ -318,6 +402,14 @@ window.onload = function() {
     g.drawImage(sprite.image, sprite.x, sprite.y);
   }
 
+  function drawRSprite(rsprite: RSprite) {
+    g.save();
+    g.translate(rsprite.x, rsprite.y);
+    g.rotate(rsprite.rotation * Math.PI / 180);
+    g.drawImage(rsprite.localSprite.image, -rsprite.localSprite.width / 2, -rsprite.localSprite.height / 2);
+    g.restore();
+  }
+
 
   ////////////////////
   // loading screen //
@@ -376,63 +468,63 @@ window.onload = function() {
         const enterDisabledImage = getPreloadedImage("images/enterDisabled.png");
         const spaceDisabledImage = getPreloadedImage("images/spaceDisabled.png");
 
-        var sprites: (Sprite | null)[] = loadedSprites;
+        var items: (RSprite | null)[] = loadedSprites.map(makeRSpriteFromSprite);
         var spacebarsUsed = 0;
-        var currentSpriteNumber = 0;
-        var visibleSpriteCount = 0;
+        var currentItemNumber = 0;
+        var visibleItemCount = 0;
         var picked: {
-          sprite: Sprite,
+          item: RSprite,
           mouseX: number,
           mouseY: number,
-          spriteX: number,
-          spriteY: number
+          itemX: number,
+          itemY: number
         } | null = null;
 
-        function giveSpriteAway() {
+        function giveItemAway() {
           if (spacebarsUsed < rabbitImages.length-1) {
             spacebarsUsed++;
-            sprites[currentSpriteNumber] = null;
-            addNextSprite();
+            items[currentItemNumber] = null;
+            addNextItem();
           }
         }
 
-        function selectAnotherSprite() {
-          if (currentSpriteNumber == visibleSpriteCount - 1) {
-            currentSpriteNumber = 0;
+        function selectAnotherItem() {
+          if (currentItemNumber == visibleItemCount - 1) {
+            currentItemNumber = 0;
           } else {
-            currentSpriteNumber++;
+            currentItemNumber++;
           }
 
-          if (!sprites[currentSpriteNumber]) {
-            selectAnotherSprite();
+          if (!items[currentItemNumber]) {
+            selectAnotherItem();
           }
         }
 
-        function findNextSprite(): Sprite | null {
-          return sprites[visibleSpriteCount];
+        function findNextItem(): RSprite | null {
+          return items[visibleItemCount];
         }
 
-        function addNextSprite() {
-          const sprite = findNextSprite();
+        function addNextItem() {
+          const item = findNextItem();
 
-          if (sprite) {
-            visibleSpriteCount++;
-            currentSpriteNumber = visibleSpriteCount - 1;
+          if (item) {
+            visibleItemCount++;
+            currentItemNumber = visibleItemCount - 1;
 
-            sprite.x = 390 - Math.round(sprite.width  / 2);
-            sprite.y = 373 - Math.round(sprite.height / 2);
+            item.x = 390;
+            item.y = 373;
           } else {
             attachNextLevel();
           }
         }
 
-        function hoverOverSprite(event: MouseEvent) {
+        function hoverOverItem(event: MouseEvent) {
           const mouseX = event.offsetX;
           const mouseY = event.offsetY;
 
-          for(var i=0; i<visibleSpriteCount; i++) {
-            const sprite = sprites[i];
-            if (sprite && spriteContainsPoint(sprite, mouseX, mouseY)) {
+          for(var i=0; i<visibleItemCount; i++) {
+            const item = items[i];
+            if (item && rspriteContainsPoint(item, mouseX, mouseY)) {
               gameCanvas.setAttribute("style", "cursor: move; cursor: grab; cursor:-moz-grab; cursor:-webkit-grab;");
 
               return;
@@ -442,21 +534,21 @@ window.onload = function() {
           gameCanvas.setAttribute("style", "cursor: default;");
         }
 
-        function pickSprite(event: MouseEvent) {
+        function pickItem(event: MouseEvent) {
           const mouseX = event.offsetX;
           const mouseY = event.offsetY;
 
-          for(var i=0; i<visibleSpriteCount; i++) {
-            const sprite = sprites[i];
-            if (sprite && spriteContainsPoint(sprite, mouseX, mouseY)) {
+          for(var i=0; i<visibleItemCount; i++) {
+            const item = items[i];
+            if (item && rspriteContainsPoint(item, mouseX, mouseY)) {
               gameCanvas.setAttribute("style", "cursor: move; cursor: grabbing; cursor:-moz-grabbing; cursor:-webkit-grabbing;");
-              currentSpriteNumber = i;
+              currentItemNumber = i;
               picked = {
-                sprite: sprite,
+                item: item,
                 mouseX: mouseX,
                 mouseY: mouseY,
-                spriteX: sprite.x,
-                spriteY: sprite.y
+                itemX: item.x,
+                itemY: item.y
               };
 
               return;
@@ -464,34 +556,36 @@ window.onload = function() {
           }
         }
 
-        function dragSprite(event: MouseEvent) {
+        function dragItem(event: MouseEvent) {
           if (picked) {
             const mouseX = event.offsetX;
             const mouseY = event.offsetY;
 
-            picked.sprite.x = mouseX - picked.mouseX + picked.spriteX;
-            picked.sprite.y = mouseY - picked.mouseY + picked.spriteY;
+            picked.item.x = mouseX - picked.mouseX + picked.itemX;
+            picked.item.y = mouseY - picked.mouseY + picked.itemY;
 
             updateGameScreen();
           } else {
-            hoverOverSprite(event);
+            hoverOverItem(event);
           }
         }
 
-        function moveSprite(event: KeyboardEvent) {
-          const sprite = sprites[currentSpriteNumber];
-          if (!sprite) return;
+        function moveItem(event: KeyboardEvent) {
+          const item = items[currentItemNumber];
+          if (!item) return;
 
           var handled = true;
 
-          if      (event.key === "ArrowUp"    || event.key.toLowerCase() === "w") sprite.y -= event.shiftKey ? 8 : 1;
-          else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") sprite.x -= event.shiftKey ? 8 : 1;
-          else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") sprite.y += event.shiftKey ? 8 : 1;
-          else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") sprite.x += event.shiftKey ? 8 : 1;
-          else if (event.key === "Enter" && !anySpritesCollide()) addNextSprite();
-          else if (event.key === " ") giveSpriteAway();
+          if      (event.key === "ArrowUp"    || event.key.toLowerCase() === "w") item.y -= event.shiftKey ? 8 : 1;
+          else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") item.x -= event.shiftKey ? 8 : 1;
+          else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") item.y += event.shiftKey ? 8 : 1;
+          else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") item.x += event.shiftKey ? 8 : 1;
+          else if (event.key === "PageUp"     || event.key.toLowerCase() === "q") item.rotation -= event.shiftKey ? 40 : 1;
+          else if (event.key === "PageDown"   || event.key.toLowerCase() === "e") item.rotation += event.shiftKey ? 40 : 1;
+          else if (event.key === "Enter" && !anyItemsCollide()) addNextItem();
+          else if (event.key === " ") giveItemAway();
           else if (event.key === "Tab") {
-            selectAnotherSprite();
+            selectAnotherItem();
           }
           else {
             handled = false;
@@ -506,25 +600,25 @@ window.onload = function() {
           updateGameScreen();
         }
 
-        function releaseSprite(event: MouseEvent) {
+        function releaseItem(event: MouseEvent) {
           if (picked) {
             gameCanvas.setAttribute("style", "cursor: move; cursor: grab; cursor:-moz-grab; cursor:-webkit-grab;");
             picked = null;
           }
         }
 
-        function anySpritesCollide(): boolean {
-          for(var i=0; i<visibleSpriteCount; i++) {
-            const spriteI = sprites[i];
-            if (spriteI) {
-              if (!spriteFitsInsideBounds(spriteI, 54, 54, 725, 725)) {
+        function anyItemsCollide(): boolean {
+          for(var i=0; i<visibleItemCount; i++) {
+            const itemI = items[i];
+            if (itemI) {
+              if (!rspriteFitsInsideBounds(itemI, 54, 54, 725, 725)) {
                 return true;
               }
 
-              for(var j=i+1; j<visibleSpriteCount; j++) {
-                const spriteJ = sprites[j];
-                if (spriteJ) {
-                  if (spritesCollide(spriteI, spriteJ)) {
+              for(var j=i+1; j<visibleItemCount; j++) {
+                const itemJ = items[j];
+                if (itemJ) {
+                  if (rspritesCollide(itemI, itemJ)) {
                     return true;
                   }
                 }
@@ -537,34 +631,34 @@ window.onload = function() {
 
         return {
           attach: () => {
-            gameCanvas.addEventListener("mousedown", pickSprite);
-            gameCanvas.addEventListener("mousemove", dragSprite);
-            gameCanvas.addEventListener("mouseup", releaseSprite);
-            window.addEventListener("keydown", moveSprite);
+            gameCanvas.addEventListener("mousedown", pickItem);
+            gameCanvas.addEventListener("mousemove", dragItem);
+            gameCanvas.addEventListener("mouseup", releaseItem);
+            window.addEventListener("keydown", moveItem);
 
-            addNextSprite();
-            addNextSprite();
+            addNextItem();
+            addNextItem();
           },
           detach: () => {
-            gameCanvas.removeEventListener("mousedown", pickSprite);
-            gameCanvas.removeEventListener("mousemove", dragSprite);
-            gameCanvas.removeEventListener("mouseup", releaseSprite);
-            window.removeEventListener("keydown", moveSprite);
+            gameCanvas.removeEventListener("mousedown", pickItem);
+            gameCanvas.removeEventListener("mousemove", dragItem);
+            gameCanvas.removeEventListener("mouseup", releaseItem);
+            window.removeEventListener("keydown", moveItem);
           },
           draw: () => {
             g.drawImage(background, 0, 0);
 
-            const nextSprite: Sprite | null = findNextSprite();
-            if (nextSprite) {
-              drawImageInsideBox(g, nextSprite.image, 778, 202, 240, 155);
+            const nextItem: RSprite | null = findNextItem();
+            if (nextItem) {
+              drawImageInsideBox(g, nextItem.localSprite.image, 778, 202, 240, 155);
             }
 
             const rabbitImage = rabbitImages[spacebarsUsed];
             g.drawImage(rabbitImage, 1050, 143);
 
-            const collision = anySpritesCollide();
+            const collision = anyItemsCollide();
 
-            const helpImage = (collision || findNextSprite()) ? controlsImage : movingOnImage;
+            const helpImage = (collision || findNextItem()) ? controlsImage : movingOnImage;
             g.drawImage(helpImage, 768, 390);
 
             if (spacebarsUsed == rabbitImages.length - 1) {
@@ -574,15 +668,15 @@ window.onload = function() {
               g.drawImage(enterDisabledImage, 1169, 475);
             }
 
-            for(var i=0; i<visibleSpriteCount; i++) {
-              if (i != currentSpriteNumber) {
-                const sprite = sprites[i];
-                if (sprite) drawSprite(sprite);
+            for(var i=0; i<visibleItemCount; i++) {
+              if (i != currentItemNumber) {
+                const item = items[i];
+                if (item) drawRSprite(item);
               }
             }
 
-            const sprite = sprites[currentSpriteNumber];
-            if (sprite) drawSprite(sprite);
+            const item = items[currentItemNumber];
+            if (item) drawRSprite(item);
           }
         };
       }
