@@ -567,7 +567,7 @@ window.onload = function() {
 
           for(var i=0; i<visibleItemCount; i++) {
             const itemI = items[i];
-            if (itemI && itemI.localSprite.width > 670 || itemI.localSprite.height > 670) {
+            if (itemI && (itemI.localSprite.width > 670 || itemI.localSprite.height > 670)) {
               // this is a joke item, no need to display the collisions
               collisionPoints.push({x: -1, y: -1});
               displayCollisionPoints();
