@@ -400,6 +400,23 @@ window.onload = function() {
           }
         }
 
+        function hoverOverSprite(event: MouseEvent) {
+          console.log("hovering");
+          const mouseX = event.offsetX;
+          const mouseY = event.offsetY;
+
+          for(var i=0; i<visibleSpriteCount; i++) {
+            const sprite = sprites[i];
+            if (sprite && spriteContainsPoint(sprite, mouseX, mouseY)) {
+              gameCanvas.setAttribute("style", "cursor: move; cursor: grab; cursor:-moz-grab; cursor:-webkit-grab;");
+
+              return;
+            }
+          }
+
+          gameCanvas.setAttribute("style", "cursor: default;");
+        }
+
         function pickSprite(event: MouseEvent) {
           const mouseX = event.offsetX;
           const mouseY = event.offsetY;
@@ -407,6 +424,7 @@ window.onload = function() {
           for(var i=0; i<visibleSpriteCount; i++) {
             const sprite = sprites[i];
             if (sprite && spriteContainsPoint(sprite, mouseX, mouseY)) {
+              gameCanvas.setAttribute("style", "cursor: move; cursor: grabbing; cursor:-moz-grabbing; cursor:-webkit-grabbing;");
               currentSpriteNumber = i;
               picked = {
                 sprite: sprite,
@@ -415,6 +433,8 @@ window.onload = function() {
                 spriteX: sprite.x,
                 spriteY: sprite.y
               };
+
+              return;
             }
           }
         }
@@ -428,6 +448,8 @@ window.onload = function() {
             picked.sprite.y = mouseY - picked.mouseY + picked.spriteY;
 
             updateGameScreen();
+          } else {
+            hoverOverSprite(event);
           }
         }
 
@@ -461,7 +483,10 @@ window.onload = function() {
         }
 
         function releaseSprite(event: MouseEvent) {
-          picked = null;
+          if (picked) {
+            gameCanvas.setAttribute("style", "cursor: move; cursor: grab; cursor:-moz-grab; cursor:-webkit-grab;");
+            picked = null;
+          }
         }
 
         function anySpritesCollide(): boolean {
@@ -547,12 +572,28 @@ window.onload = function() {
         alert("You're a hoarder");
       }
 
+      function hoverOverButton(event: MouseEvent) {
+        const mouseX = event.offsetX;
+        const mouseY = event.offsetY;
+
+        if (spriteContainsPoint(playButton, mouseX, mouseY) || spriteContainsPoint(storyButton, mouseX, mouseY)) {
+          gameCanvas.setAttribute("style", "cursor: pointer;");
+        } else {
+          gameCanvas.setAttribute("style", "cursor: default;");
+        }
+      }
+
       function clickButton(event: MouseEvent) {
         const mouseX = event.offsetX;
         const mouseY = event.offsetY;
 
-        if      (spriteContainsPoint(playButton,  mouseX, mouseY)) attachNextLevel();
-        else if (spriteContainsPoint(storyButton, mouseX, mouseY)) displayStory();
+        if (spriteContainsPoint(playButton,  mouseX, mouseY)) {
+          gameCanvas.setAttribute("style", "cursor: default;");
+          attachNextLevel();
+        } else if (spriteContainsPoint(storyButton, mouseX, mouseY)) {
+          gameCanvas.setAttribute("style", "cursor: default;");
+          displayStory();
+        }
       }
 
       function typeButton(event: KeyboardEvent) {
@@ -561,10 +602,12 @@ window.onload = function() {
 
       return {
         attach: () => {
+          gameCanvas.addEventListener("mousemove", hoverOverButton);
           gameCanvas.addEventListener("mouseup", clickButton);
           window.addEventListener("keyup", typeButton);
         },
         detach: () => {
+          gameCanvas.removeEventListener("mousemove", hoverOverButton);
           gameCanvas.removeEventListener("mouseup", clickButton);
           window.removeEventListener("keyup", typeButton);
         },
