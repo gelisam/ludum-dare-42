@@ -796,7 +796,7 @@ window.onload = function() {
               drawCenteredImage(g, currentResponseImage, 1178, 377);
             }
 
-            const helpImage = (lastCollisions.length === 0 && findNextItem() === null) ? movingOnImage : controlsImage;
+            const helpImage = (lastCollisions.length == 0 && findNextItem() == null) ? movingOnImage : controlsImage;
             g.drawImage(helpImage, 768, 390);
 
             if (spacebarsUsed == rabbitImages.length - 1) {
