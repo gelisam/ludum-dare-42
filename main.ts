@@ -96,7 +96,7 @@ function drawImageInsideBox(g: CanvasRenderingContext2D, img: HTMLImageElement, 
 
 type PixelMap = (x: number, y: number) => boolean;
 
-function loadPixelMapFromCanvas(canvas: HTMLCanvasElement) {
+function makePixelMapFromCanvas(canvas: HTMLCanvasElement) {
   const width = canvas.width;
   const height = canvas.height;
   const imageData = getCanvasContext(canvas).getImageData(0, 0, width, height).data;
@@ -141,16 +141,16 @@ function pixelMapsCollideInsideBounds(pixelMap1: PixelMap, pixelMap2: PixelMap, 
 ///////////////////////
 
 type Sprite = {
-  x: number,
+  x: number, // top-left
   y: number,
   width: number,
   height: number,
   image: HTMLImageElement,
-  pixelMap: PixelMap
+  localPixelMap: PixelMap  // doesn't change when sprite.x and sprite.y do
 };
 
 function spritePixelMap(sprite: Sprite): PixelMap {
-  return pixelMapAt(sprite.pixelMap, sprite.x, sprite.y);
+  return pixelMapAt(sprite.localPixelMap, sprite.x, sprite.y);
 }
 
 function spriteContainsPoint(sprite: Sprite, x: number, y: number) {
@@ -234,7 +234,7 @@ function spritesCollide(sprite1: Sprite, sprite2: Sprite): boolean {
 type Level = {
   backgroundFile: string,
   spriteFiles: string[]
-}
+};
 
 declare const levels: [Level];
 
@@ -291,14 +291,14 @@ window.onload = function() {
 
       // let the browser draw the image before we attempt to read it back
       setTimeout(() => {
-        const pixelMap = loadPixelMapFromCanvas(hiddenCanvas);
+        const pixelMap = makePixelMapFromCanvas(hiddenCanvas);
         resolve({
           x: 0,
           y: 0,
           width: img.width,
           height: img.height,
           image: img,
-          pixelMap: pixelMap
+          localPixelMap: pixelMap
         });
       });
     });
