@@ -488,6 +488,7 @@ window.onload = function() {
         } | null = null;
 
         var collisions: Point[] | null = null;
+        var lastCollisions: Point[] = [];
         var collisionTimeout: number | null = null;
 
         function resetCollisions() {
@@ -540,6 +541,7 @@ window.onload = function() {
             }
 
             collisions = collisionPoints;
+            lastCollisions = collisionPoints;
             collisionTimeout = null;
             updateGameScreen();
           }
@@ -753,13 +755,13 @@ window.onload = function() {
               drawCenteredImage(g, currentResponseImage, 1178, 377);
             }
 
-            const helpImage = (collisions && collisions.length === 0 && findNextItem() === null) ? movingOnImage : controlsImage;
+            const helpImage = (lastCollisions.length === 0 && findNextItem() === null) ? movingOnImage : controlsImage;
             g.drawImage(helpImage, 768, 390);
 
             if (spacebarsUsed == rabbitImages.length - 1) {
               g.drawImage(spaceDisabledImage, 1034, 628);
             }
-            if (collisions === null || collisions.length !== 0) {
+            if (lastCollisions.length !== 0) {
               g.drawImage(enterDisabledImage, 1169, 475);
             }
 
@@ -773,12 +775,10 @@ window.onload = function() {
             const item = items[currentItemNumber];
             if (item) drawRSprite(item);
 
-            if (collisions !== null) {
-              g.fillStyle="#FF0000C0";
-              collisions.forEach(({x,y}) => {
-                g.fillRect(x, y, 1, 1);
-              });
-            }
+            g.fillStyle="#FF0000C0";
+            lastCollisions.forEach(({x,y}) => {
+              g.fillRect(x, y, 1, 1);
+            });
           }
         };
       }
