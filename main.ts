@@ -553,11 +553,9 @@ window.onload = function() {
           function innerLoop(i: number, itemI: RSprite, j: number) {
             if (j < visibleItemCount) {
               const itemJ = items[j];
-              if (itemJ) {
-                rspritesIntersect(itemI, itemJ, addCollisionPoint);
-                collisionTimeout = setTimeout(() => innerLoop(i, itemI, j+1));
-                return;
-              }
+              if (itemJ) rspritesIntersect(itemI, itemJ, addCollisionPoint);
+              collisionTimeout = setTimeout(() => innerLoop(i, itemI, j+1));
+              return;
             }
 
             collisionTimeout = setTimeout(() => outerLoop(i+1));
