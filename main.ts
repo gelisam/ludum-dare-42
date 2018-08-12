@@ -69,8 +69,12 @@ function loadImage(imageFile: string): Promise<HTMLImageElement> {
   });
 }
 
-function drawCenteredImage(g: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, width: number, height: number) {
+function drawScaledCenteredImage(g: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, width: number, height: number) {
   g.drawImage(img, x - width/2, y - height/2, width, height);
+}
+
+function drawCenteredImage(g: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number) {
+  drawScaledCenteredImage(g, img, x, y, img.width, img.height);
 }
 
 function drawImageInsideBox(g: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, width: number, height: number) {
@@ -79,13 +83,13 @@ function drawImageInsideBox(g: CanvasRenderingContext2D, img: HTMLImageElement, 
 
   if (img.width <= width && img.height <= height) {
     // unscaled, centered
-    drawCenteredImage(g, img, centerX, centerY, img.width, img.height);
+    drawScaledCenteredImage(g, img, centerX, centerY, img.width, img.height);
   } else if (img.width / img.height >= width / height) {
     // scale width to fit
-    drawCenteredImage(g, img, centerX, centerY, width, img.height * width / img.width);
+    drawScaledCenteredImage(g, img, centerX, centerY, width, img.height * width / img.width);
   } else {
     // scale height to fit
-    drawCenteredImage(g, img, centerX, centerY, img.width * height / img.height, height);
+    drawScaledCenteredImage(g, img, centerX, centerY, img.width * height / img.height, height);
   }
 }
 
@@ -461,7 +465,8 @@ window.onload = function() {
         ]
       ),
       ([background, loadedSprites]) => {
-        const rabbitImages = [1,2,3,4].map(i => getPreloadedImage(`images/rabbit${i}.png`));
+        const rabbitImages   = [1,2,3,4].map(i => getPreloadedImage(`images/rabbit${i}.png`));
+        const responseImages = [1,2,3,4].map(i => getPreloadedImage(`images/give${i}.png`));
         const controlsImage = getPreloadedImage("images/controls.png");
         const movingOnImage = getPreloadedImage("images/controlsNext.png");
         const enterDisabledImage = getPreloadedImage("images/enterDisabled.png");
@@ -469,8 +474,13 @@ window.onload = function() {
 
         var items: (RSprite | null)[] = loadedSprites.map(makeRSpriteFromSprite);
         var spacebarsUsed = 0;
+
+        var currentResponseImage: HTMLImageElement | null = null;
+        var responseTimeout: number | null = null;
+
         var currentItemNumber = 0;
         var visibleItemCount = 0;
+
         var picked: {
           item: RSprite,
           mouseX: number,
@@ -478,18 +488,15 @@ window.onload = function() {
           itemX: number,
           itemY: number
         } | null = null;
-        var collisions: Point[] | null = null;
-        var collisionFinder: number | null = null;
 
-        function clearCollisions() {
-          if (collisionFinder != null) clearTimeout(collisionFinder);
-        }
+        var collisions: Point[] | null = null;
+        var collisionTimeout: number | null = null;
 
         function resetCollisions() {
           collisions = null;
 
-          clearCollisions();
-          collisionFinder = setTimeout(findCollisions);
+          if (collisionTimeout !== null) clearTimeout(collisionTimeout);
+          collisionTimeout = setTimeout(findCollisions);
         }
 
         //function anyItemsCollide(): boolean {
@@ -529,13 +536,13 @@ window.onload = function() {
               const itemI = items[i];
               if (itemI) {
                 rspriteIntersectsOutsideBounds(itemI, 54, 54, 725, 725, addCollisionPoint);
-                collisionFinder = setTimeout(() => innerLoop(i, itemI, i+1));
+                collisionTimeout = setTimeout(() => innerLoop(i, itemI, i+1));
                 return;
               }
             }
 
             collisions = collisionPoints;
-            collisionFinder = null;
+            collisionTimeout = null;
             updateGameScreen();
           }
 
@@ -544,18 +551,30 @@ window.onload = function() {
               const itemJ = items[j];
               if (itemJ) {
                 rspritesIntersect(itemI, itemJ, addCollisionPoint);
-                collisionFinder = setTimeout(() => innerLoop(i, itemI, j+1));
+                collisionTimeout = setTimeout(() => innerLoop(i, itemI, j+1));
                 return;
               }
             }
 
-            collisionFinder = setTimeout(() => outerLoop(i+1));
+            collisionTimeout = setTimeout(() => outerLoop(i+1));
           }
 
-          collisionFinder = setTimeout(() => outerLoop(0));
+          collisionTimeout = setTimeout(() => outerLoop(0));
         }
 
         function giveItemAway() {
+          currentResponseImage = responseImages[spacebarsUsed];
+
+          if (responseTimeout !== null) clearTimeout(responseTimeout);
+          responseTimeout = setTimeout(
+            () => {
+              currentResponseImage = null;
+              responseTimeout = null;
+
+              updateGameScreen();
+            }, 2000
+          );
+
           if (spacebarsUsed < rabbitImages.length-1) {
             spacebarsUsed++;
             items[currentItemNumber] = null;
@@ -701,7 +720,9 @@ window.onload = function() {
             gameCanvas.removeEventListener("mousemove", dragItem);
             gameCanvas.removeEventListener("mouseup", releaseItem);
             window.removeEventListener("keydown", moveItem);
-            clearCollisions();
+
+            if (collisionTimeout !== null) clearTimeout(collisionTimeout);
+            if (responseTimeout  !== null) clearTimeout(responseTimeout);
           },
           draw: () => {
             g.drawImage(background, 0, 0);
@@ -713,6 +734,10 @@ window.onload = function() {
 
             const rabbitImage = rabbitImages[spacebarsUsed];
             g.drawImage(rabbitImage, 1050, 143);
+
+            if (currentResponseImage) {
+              drawCenteredImage(g, currentResponseImage, 1178, 377);
+            }
 
             const helpImage = (collisions && collisions.length === 0 && findNextItem() === null) ? movingOnImage : controlsImage;
             g.drawImage(helpImage, 768, 390);
