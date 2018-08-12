@@ -601,19 +601,22 @@ window.onload = function() {
           if (spacebarsUsed < rabbitImages.length-1) {
             spacebarsUsed++;
             items[currentItemNumber] = null;
-            addNextItem();
+            selectAnotherItem();
           }
         }
 
         function selectAnotherItem() {
-          if (currentItemNumber == visibleItemCount - 1) {
-            currentItemNumber = 0;
-          } else {
-            currentItemNumber++;
+          for(var i=currentItemNumber; i<visibleItemCount; i++) {
+            if (items[i]) {
+              currentItemNumber = i;
+              return;
+            }
           }
-
-          if (!items[currentItemNumber]) {
-            selectAnotherItem();
+          for(var i=0; i<currentItemNumber; i++) {
+            if (items[i]) {
+              currentItemNumber = i;
+              return;
+            }
           }
         }
 
