@@ -7,6 +7,15 @@ function error<A>(msg: string): A {
 }
 
 
+////////////
+// Canvas //
+////////////
+
+function getCanvasContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
+  return canvas.getContext("2d") || error("canvas has no 2D context");
+}
+
+
 //////////////
 // Promises //
 //////////////
@@ -73,13 +82,55 @@ function drawImageInsideBox(g: CanvasRenderingContext2D, img: HTMLImageElement, 
 }
 
 
-///////////////////////
-// CollisionDetector //
-///////////////////////
+//////////////
+// PixelMap //
+//////////////
 
-// type definitions for class.collisionDetection.js
+type PixelMap = (x: number, y: number) => boolean;
 
-enum PixelMap {};
+function loadPixelMapFromCanvas(canvas: HTMLCanvasElement) {
+  const width = canvas.width;
+  const height = canvas.height;
+  const imageData = getCanvasContext(canvas).getImageData(0, 0, width, height).data;
+  return (x: number, y: number) => imageData[ y * width * 4 + x * 4 + 3 ] == 255;
+}
+
+function pixelMapAt(pixelMap: PixelMap, x: number, y: number): PixelMap {
+  return (i, j) => pixelMap(i-x, j-y);
+}
+
+function pixelMapContainsPoint(pixelMap: PixelMap, x: number, y: number): boolean {
+  return pixelMap(x, y);
+}
+
+function pixelMapCollidesWithBounds(pixelMap: PixelMap, left: number, top: number, right: number, bottom: number): boolean {
+  for(var x=left; x<right; x++) {
+    for(var y=top; y<bottom; y++) {
+      if (pixelMap(x, y)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function pixelMapsCollideInsideBounds(pixelMap1: PixelMap, pixelMap2: PixelMap, left: number, top: number, right: number, bottom: number): boolean {
+  for(var x=left; x<right; x++) {
+    for(var y=top; y<bottom; y++) {
+      if (pixelMap1(x, y) && pixelMap2(x, y)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+
+///////////////////////
+// sprite collisions //
+///////////////////////
 
 type Sprite = {
   x: number,
@@ -90,14 +141,62 @@ type Sprite = {
   pixelMap: PixelMap
 };
 
-type CollisionDetector = {
-  hitTest: (source: Sprite, target: Sprite) => boolean,
-  buildPixelMap: (source: HTMLCanvasElement) => PixelMap
-};
+function spritePixelMap(sprite: Sprite): PixelMap {
+  return pixelMapAt(sprite.pixelMap, sprite.x, sprite.y);
+}
 
-declare function collisionDetection(): CollisionDetector;
+function spriteContainsPoint(sprite: Sprite, x: number, y: number) {
+  if (x < sprite.x || x >= sprite.x + sprite.width || y < sprite.y || y >= sprite.y + sprite.height) {
+    return false;
+  } else {
+    return pixelMapContainsPoint(spritePixelMap(sprite), x, y);
+  }
+}
 
-const collisionDetector = collisionDetection();
+function spriteCollidesWithBounds(sprite: Sprite, left: number, top: number, right: number, bottom: number): boolean {
+  const spriteLeft   = sprite.x;
+  const spriteTop    = sprite.y;
+  const spriteRight  = sprite.x + sprite.width;
+  const spriteBottom = sprite.y + sprite.height;
+
+  if (spriteLeft > right || spriteRight < left || spriteTop > bottom || spriteBottom < top) {
+    return false;
+  } else {
+    return pixelMapCollidesWithBounds(
+      spritePixelMap(sprite),
+      Math.max(spriteLeft,   left),
+      Math.max(spriteTop,    top),
+      Math.min(spriteRight,  right),
+      Math.min(spriteBottom, bottom)
+    );
+  }
+}
+
+function spritesCollide(sprite1: Sprite, sprite2: Sprite): boolean {
+  const sprite1Left   = sprite1.x;
+  const sprite1Top    = sprite1.y;
+  const sprite1Right  = sprite1.x + sprite1.width;
+  const sprite1Bottom = sprite1.y + sprite1.height;
+
+  const sprite2Left   = sprite2.x;
+  const sprite2Top    = sprite2.y;
+  const sprite2Right  = sprite2.x + sprite2.width;
+  const sprite2Bottom = sprite2.y + sprite2.height;
+
+
+  if (sprite1Left > sprite2Right || sprite1Right < sprite2Left || sprite1Top > sprite2Bottom || sprite1Bottom < sprite2Top) {
+    return false;
+  } else {
+    return pixelMapsCollideInsideBounds(
+      spritePixelMap(sprite1),
+      spritePixelMap(sprite2),
+      Math.max(sprite1Left,   sprite2Left),
+      Math.max(sprite1Top,    sprite2Top),
+      Math.min(sprite1Right,  sprite2Right),
+      Math.min(sprite1Bottom, sprite2Bottom)
+    );
+  }
+}
 
 
 ////////////
@@ -153,9 +252,9 @@ window.onload = function() {
          || <CanvasRenderingContext2D>error("gameCanvas has no 2D context");
 
 
-  ////////////
-  // Sprite //
-  ////////////
+  ////////////////////////////////
+  // sprite loading and drawing //
+  ////////////////////////////////
 
   function loadSpriteFromImage(img: HTMLImageElement): Promise<Sprite> {
     return new Promise((resolve, reject) => {
@@ -166,7 +265,7 @@ window.onload = function() {
 
       // let the browser draw the image before we attempt to read it back
       setTimeout(() => {
-        const pixelMap = collisionDetector.buildPixelMap(hiddenCanvas);
+        const pixelMap = loadPixelMapFromCanvas(hiddenCanvas);
         resolve({
           x: 0,
           y: 0,
@@ -192,12 +291,6 @@ window.onload = function() {
   function drawSprite(sprite: Sprite) {
     g.drawImage(sprite.image, sprite.x, sprite.y);
   }
-
-  function spritesCollide(sprite1: Sprite, sprite2: Sprite): boolean {
-    return collisionDetector.hitTest(sprite1, sprite2);
-  }
-
-
 
 
   ////////////////////
@@ -247,10 +340,10 @@ window.onload = function() {
       () => Promise.all<HTMLImageElement, Sprite[]>(
         [
           loadImage(level.backgroundFile),
-          loadSprites(["images/1px.png"].concat(level.spriteFiles))
+          loadSprites(level.spriteFiles)
         ]
       ),
-      ([background, [mouse, ...loadedSprites]]) => {
+      ([background, loadedSprites]) => {
         const rabbitImages = [1,2,3,4].map(i => getPreloadedImage(`images/rabbit${i}.png`));
         const conflictImage = getPreloadedImage("images/controls.png");
         const movingOnImage = getPreloadedImage("images/controlsNext.png");
@@ -308,17 +401,17 @@ window.onload = function() {
         }
 
         function pickSprite(event: MouseEvent) {
-          mouse.x = event.offsetX;
-          mouse.y = event.offsetY;
+          const mouseX = event.offsetX;
+          const mouseY = event.offsetY;
 
           for(var i=0; i<visibleSpriteCount; i++) {
             const sprite = sprites[i];
-            if (sprite && spritesCollide(mouse, sprite)) {
+            if (sprite && spriteContainsPoint(sprite, mouseX, mouseY)) {
               currentSpriteNumber = i;
               picked = {
                 sprite: sprite,
-                mouseX: mouse.x,
-                mouseY: mouse.y,
+                mouseX: mouseX,
+                mouseY: mouseY,
                 spriteX: sprite.x,
                 spriteY: sprite.y
               };
@@ -328,11 +421,11 @@ window.onload = function() {
 
         function dragSprite(event: MouseEvent) {
           if (picked) {
-            mouse.x = event.offsetX;
-            mouse.y = event.offsetY;
+            const mouseX = event.offsetX;
+            const mouseY = event.offsetY;
 
-            picked.sprite.x = mouse.x - picked.mouseX + picked.spriteX;
-            picked.sprite.y = mouse.y - picked.mouseY + picked.spriteY;
+            picked.sprite.x = mouseX - picked.mouseX + picked.spriteX;
+            picked.sprite.y = mouseY - picked.mouseY + picked.spriteY;
 
             updateGameScreen();
           }
@@ -441,10 +534,10 @@ window.onload = function() {
     () => Promise.all<HTMLImageElement, Sprite[]>(
       [
         loadImage("images/title.png"),
-        loadSprites(["images/1px.png", "images/playButton.png", "images/storyButton.png"])
+        loadSprites(["images/playButton.png", "images/storyButton.png"])
       ]
     ),
-    ([bg, [mouse, playButton, storyButton]]) => {
+    ([bg, [playButton, storyButton]]) => {
       playButton.x = 30;
       playButton.y = 512;
       storyButton.x = 30;
@@ -455,11 +548,11 @@ window.onload = function() {
       }
 
       function clickButton(event: MouseEvent) {
-        mouse.x = event.offsetX;
-        mouse.y = event.offsetY;
+        const mouseX = event.offsetX;
+        const mouseY = event.offsetY;
 
-        if      (spritesCollide(mouse, playButton)) attachNextLevel();
-        else if (spritesCollide(mouse, storyButton)) displayStory();
+        if      (spriteContainsPoint(playButton,  mouseX, mouseY)) attachNextLevel();
+        else if (spriteContainsPoint(storyButton, mouseX, mouseY)) displayStory();
       }
 
       function typeButton(event: KeyboardEvent) {
