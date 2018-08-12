@@ -92,17 +92,17 @@ function loadImage(imageFile: string): Promise<HTMLImageElement> {
   });
 }
 
-function loadAudio(audioFile: string): Promise<HTMLAudioElement> {
+function loadSound(soundFile: string): Promise<HTMLAudioElement> {
   return new Promise((resolve, reject) => {
     const audio = new Audio();
     audio.addEventListener("loadeddata", () => {
       resolve(audio);
     });
     audio.addEventListener("error", () => {
-      reject(new Error("Failed to load audio file " + audioFile));
+      reject(new Error("Failed to load sound " + soundFile));
     });
 
-    audio.src = audioFile;
+    audio.src = soundFile;
   });
 }
 
@@ -573,14 +573,15 @@ window.onload = function() {
 
   function makeLevelScreen(levelNumber: number, level: Level, initialSpacebarsUsed: number): GameScreen {
     return makeLoadingScreen(
-      () => Promise.all<HTMLImageElement, Sprite[], HTMLAudioElement[]>(
+      () => Promise.all<HTMLImageElement, Sprite[], HTMLAudioElement, HTMLAudioElement[]>(
         [
           loadImage(level.backgroundFile),
           loadSprites(level.spriteFiles),
-          Promise.all(["audio/success.ogg"].map(loadAudio))
+          loadSound("audio/success.ogg"),
+          Promise.all([1,2,3,4].map(i => loadSound(`audio/give${i}.flac`)))
         ]
       ),
-      ([background, loadedSprites, [successAudio]]) => {
+      ([background, loadedSprites, successSound, responseSounds]) => {
         const rabbitImages   = [1,2,3,4].map(i => getPreloadedImage(`images/rabbit${i}.png`));
         const responseImages = [1,2,3,4].map(i => getPreloadedImage(`images/give${i}.png`));
         const controlsImage = getPreloadedImage("images/controls.png");
@@ -750,6 +751,9 @@ window.onload = function() {
 
           currentResponseImage = responseImages[spacebarsUsed];
 
+          const sound = responseSounds[spacebarsUsed];
+          sound.play();
+
           if (responseRequest !== null) clearTimeout(responseRequest);
           responseRequest = setTimeout(
             () => {
@@ -757,7 +761,7 @@ window.onload = function() {
               responseRequest = null;
 
               updateGameScreen();
-            }, 2000
+            }, sound.duration * 1000 + 500
           );
 
           if (spacebarsUsed < rabbitImages.length-1) {
@@ -817,7 +821,7 @@ window.onload = function() {
               }
             });
           } else {
-            successAudio.play();
+            successSound.play();
             attachLevel(levelNumber+1, spacebarsUsed);
           }
         }
