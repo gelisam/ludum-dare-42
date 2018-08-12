@@ -631,7 +631,7 @@ window.onload = function() {
           if (collisionRequest !== "disabled" && collisionRequest !== null) clearTimeout(collisionRequest);
           collisionRequest = "disabled";
 
-          lastCollisions = [];
+          lastCollisions = [{x: -1, y: -1}];
         }
 
         function enableCollisions() {
