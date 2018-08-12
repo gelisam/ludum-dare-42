@@ -441,22 +441,20 @@ window.onload = function() {
   //////////////////
 
   // the first level has number 1
-  var currentLevelNumber: number | null = null;
-
-  function attachNextLevel() {
-    currentLevelNumber = (currentLevelNumber || 0) + 1;
-
+  function attachNextLevel(levelNumber: number, spacebarsUsed: number) {
     // the first level is at index 0
-    const level: Level | null = levels[currentLevelNumber-1];
+    const level: Level | null = levels[levelNumber-1];
 
     if (level) {
-      attachGameScreen(makeLevelScreen(level));
+      attachGameScreen(makeLevelScreen(levelNumber, level, spacebarsUsed));
+    } else if (spacebarsUsed === 3) {
+      attachGameScreen(badEndingScreen);
     } else {
-      attachGameScreen(endScreen);
+      attachGameScreen(goodEndingScreen);
     }
   }
 
-  function makeLevelScreen(level: Level): GameScreen {
+  function makeLevelScreen(levelNumber: number, level: Level, initialSpacebarsUsed: number): GameScreen {
     return makeLoadingScreen(
       () => Promise.all<HTMLImageElement, Sprite[]>(
         [
@@ -473,7 +471,7 @@ window.onload = function() {
         const spaceDisabledImage = getPreloadedImage("images/spaceDisabled.png");
 
         var items: (RSprite | null)[] = loadedSprites.map(makeRSpriteFromSprite);
-        var spacebarsUsed = 0;
+        var spacebarsUsed = initialSpacebarsUsed;
 
         var currentResponseImage: HTMLImageElement | null = null;
         var responseTimeout: number | null = null;
@@ -611,7 +609,7 @@ window.onload = function() {
 
             resetCollisions();
           } else {
-            attachNextLevel();
+            attachNextLevel(levelNumber+1, spacebarsUsed);
           }
         }
 
@@ -680,11 +678,25 @@ window.onload = function() {
           else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") item.x += event.shiftKey ? 8 : 1;
           else if (event.key === "PageUp"     || event.key.toLowerCase() === "q") item.rotation -= event.shiftKey ? 40 : 1;
           else if (event.key === "PageDown"   || event.key.toLowerCase() === "e") item.rotation += event.shiftKey ? 40 : 1;
-          else if (event.key === "Enter" && collisions && collisions.length === 0) addNextItem();
-          else if (event.key === " ") giveItemAway();
-          else if (event.key === "Tab") {
-            selectAnotherItem();
+          else {
+            handled = false;
+            //console.log(event.key);
           }
+
+          if (handled) {
+            event.stopPropagation();
+            event.preventDefault();
+            resetCollisions();
+            updateGameScreen();
+          }
+        }
+
+        function action(event: KeyboardEvent) {
+          var handled = true;
+
+          if      (event.key === "Enter" && collisions && collisions.length === 0) addNextItem();
+          else if (event.key === " ") giveItemAway();
+          else if (event.key === "Tab") selectAnotherItem();
           else {
             handled = false;
             //console.log(event.key);
@@ -711,6 +723,7 @@ window.onload = function() {
             gameCanvas.addEventListener("mousemove", dragItem);
             gameCanvas.addEventListener("mouseup", releaseItem);
             window.addEventListener("keydown", moveItem);
+            window.addEventListener("keyup", action);
 
             addNextItem();
             addNextItem();
@@ -720,6 +733,7 @@ window.onload = function() {
             gameCanvas.removeEventListener("mousemove", dragItem);
             gameCanvas.removeEventListener("mouseup", releaseItem);
             window.removeEventListener("keydown", moveItem);
+            window.removeEventListener("keyup", action);
 
             if (collisionTimeout !== null) clearTimeout(collisionTimeout);
             if (responseTimeout  !== null) clearTimeout(responseTimeout);
@@ -789,6 +803,10 @@ window.onload = function() {
       storyButton.x = 30;
       storyButton.y = 640;
 
+      function play() {
+        attachNextLevel(1, 0);
+      }
+
       function displayStory() {
         attachGameScreen(storyScreen);
       }
@@ -808,9 +826,9 @@ window.onload = function() {
         const mouseX = event.offsetX;
         const mouseY = event.offsetY;
 
-        if (spriteContainsPoint(playButton,  mouseX, mouseY)) {
+        if (spriteContainsPoint(playButton, mouseX, mouseY)) {
           gameCanvas.setAttribute("style", "cursor: default;");
-          attachNextLevel();
+          play();
         } else if (spriteContainsPoint(storyButton, mouseX, mouseY)) {
           gameCanvas.setAttribute("style", "cursor: default;");
           displayStory();
@@ -818,7 +836,7 @@ window.onload = function() {
       }
 
       function typeButton(event: KeyboardEvent) {
-        if (event.key === "Enter") attachNextLevel();
+        if (event.key === "Enter") play();
       }
 
       return {
@@ -870,11 +888,115 @@ window.onload = function() {
   );
 
 
+  ////////////////////
+  // credits screen //
+  ////////////////////
+
+  function makeCreditsScreen(previousScreen: GameScreen): GameScreen {
+    return makeLoadingScreen(
+      () => loadImage("images/credits.png"),
+      bg => {
+        function returnToPreviousScreen() {
+          attachGameScreen(previousScreen);
+        }
+
+        return {
+          attach: () => {
+            gameCanvas.addEventListener("mouseup", returnToPreviousScreen);
+            window.addEventListener("keyup", returnToPreviousScreen);
+          },
+          detach: () => {
+            gameCanvas.removeEventListener("mouseup", returnToPreviousScreen);
+            window.removeEventListener("keyup", returnToPreviousScreen);
+          },
+          draw: () => {
+            g.drawImage(bg, 0, 0);
+          }
+        };
+      }
+    );
+  }
+
+
   ////////////////
-  // end screen //
+  // bad ending //
   ////////////////
 
-  const endScreen: GameScreen = makeLoadingScreen(
+  const badEndingScreen: GameScreen = makeLoadingScreen(
+    () => Promise.all<HTMLImageElement, Sprite[]>(
+      [
+        loadImage("images/ending1.png"),
+        loadSprites(["images/playAgainButton.png", "images/creditsButton.png"])
+      ]
+    ),
+    ([bg, [playAgainButton, creditsButton]]) => {
+      playAgainButton.x = 50;
+      playAgainButton.y = 620;
+      creditsButton.x = 570;
+      creditsButton.y = 620;
+
+      function playAgain() {
+        attachGameScreen(titleScreen);
+      }
+
+      function displayCredits() {
+        attachGameScreen(makeCreditsScreen(badEndingScreen));
+      }
+
+      function hoverOverButton(event: MouseEvent) {
+        const mouseX = event.offsetX;
+        const mouseY = event.offsetY;
+
+        if (spriteContainsPoint(playAgainButton, mouseX, mouseY) || spriteContainsPoint(creditsButton, mouseX, mouseY)) {
+          gameCanvas.setAttribute("style", "cursor: pointer;");
+        } else {
+          gameCanvas.setAttribute("style", "cursor: default;");
+        }
+      }
+
+      function clickButton(event: MouseEvent) {
+        const mouseX = event.offsetX;
+        const mouseY = event.offsetY;
+
+        if (spriteContainsPoint(playAgainButton, mouseX, mouseY)) {
+          gameCanvas.setAttribute("style", "cursor: default;");
+          playAgain();
+        } else if (spriteContainsPoint(creditsButton, mouseX, mouseY)) {
+          gameCanvas.setAttribute("style", "cursor: default;");
+          displayCredits();
+        }
+      }
+
+      function typeButton(event: KeyboardEvent) {
+        if (event.key === "Enter") playAgain();
+      }
+
+      return {
+        attach: () => {
+          gameCanvas.addEventListener("mousemove", hoverOverButton);
+          gameCanvas.addEventListener("mouseup", clickButton);
+          window.addEventListener("keyup", typeButton);
+        },
+        detach: () => {
+          gameCanvas.removeEventListener("mousemove", hoverOverButton);
+          gameCanvas.removeEventListener("mouseup", clickButton);
+          window.removeEventListener("keyup", typeButton);
+        },
+        draw: () => {
+          g.drawImage(bg, 0, 0);
+          drawSprite(playAgainButton);
+          drawSprite(creditsButton);
+        }
+      };
+    }
+  );
+
+
+  /////////////////
+  // good ending //
+  /////////////////
+
+  const goodEndingScreen: GameScreen = makeLoadingScreen(
     () => loadImage("images/the-end.png"),
     bg => {
       return {
