@@ -672,12 +672,12 @@ window.onload = function() {
 
           var handled = true;
 
-          if      (event.key === "ArrowUp"    || event.key.toLowerCase() === "w") item.y -= event.shiftKey ? 8 : 1;
-          else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") item.x -= event.shiftKey ? 8 : 1;
-          else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") item.y += event.shiftKey ? 8 : 1;
-          else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") item.x += event.shiftKey ? 8 : 1;
-          else if (event.key === "PageUp"     || event.key.toLowerCase() === "q") item.rotation -= event.shiftKey ? 40 : 1;
-          else if (event.key === "PageDown"   || event.key.toLowerCase() === "e") item.rotation += event.shiftKey ? 40 : 1;
+          if      (event.key === "ArrowUp"    || event.key.toLowerCase() === "w") item.y -= event.shiftKey ? 15 : 1;
+          else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") item.x -= event.shiftKey ? 15 : 1;
+          else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") item.y += event.shiftKey ? 15 : 1;
+          else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") item.x += event.shiftKey ? 15 : 1;
+          else if (event.key === "PageUp"     || event.key.toLowerCase() === "q") item.rotation -= event.shiftKey ? 10 : 1;
+          else if (event.key === "PageDown"   || event.key.toLowerCase() === "e") item.rotation += event.shiftKey ? 10 : 1;
           else {
             handled = false;
             //console.log(event.key);
