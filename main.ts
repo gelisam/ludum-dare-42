@@ -594,7 +594,7 @@ window.onload = function() {
 
         var collisions: Point[] | null = null;
         var lastCollisions: Point[] = [];
-        var collisionRequest: number | null = null;
+        var collisionRequest: number | "disabled" | null = null;
 
         var pressingQ = false;
         var pressingW = false;
@@ -614,16 +614,12 @@ window.onload = function() {
               t += dt;
               animationRequest = window.requestAnimationFrame(nextFrame);
             } else {
-              resetCollisions();
+              enableCollisions();
               animationRequest = null;
             }
           }
 
-          if (collisionRequest !== null) clearTimeout(collisionRequest);
-          collisionRequest = null;
-
-          lastCollisions = [];
-
+          disableCollisions();
           animationRequest = window.requestAnimationFrame(nextFrame);
         }
 
@@ -631,11 +627,27 @@ window.onload = function() {
           attachLevel(levelNumber, initialSpacebarsUsed);
         }
 
-        function resetCollisions() {
-          collisions = null;
+        function disableCollisions() {
+          if (collisionRequest !== "disabled" && collisionRequest !== null) clearTimeout(collisionRequest);
+          collisionRequest = "disabled";
 
-          if (collisionRequest !== null) clearTimeout(collisionRequest);
-          collisionRequest = setTimeout(findCollisions);
+          lastCollisions = [];
+        }
+
+        function enableCollisions() {
+          if (collisionRequest === "disabled") {
+            collisionRequest = null;
+            resetCollisions();
+          }
+        }
+
+        function resetCollisions() {
+          if (collisionRequest !== "disabled") {
+            collisions = null;
+
+            if (collisionRequest !== null) clearTimeout(collisionRequest);
+            collisionRequest = setTimeout(findCollisions);
+          }
         }
 
         //function anyItemsCollide(): boolean {
@@ -787,7 +799,6 @@ window.onload = function() {
                 item.y = 373 - fallDownBouncing(t) * h;
               } else {
                 item.y = 373;
-                resetCollisions();
               }
             });
           } else {
@@ -946,8 +957,8 @@ window.onload = function() {
             window.removeEventListener("keydown", keyDown);
             window.removeEventListener("keyup", keyUp);
 
-            if (collisionRequest !== null) clearTimeout(collisionRequest);
-            if (responseRequest  !== null) clearTimeout(responseRequest);
+            if (collisionRequest !== "disabled" && collisionRequest !== null) clearTimeout(collisionRequest);
+            if (responseRequest !== null) clearTimeout(responseRequest);
           },
           draw: () => {
             g.drawImage(background, 0, 0);
