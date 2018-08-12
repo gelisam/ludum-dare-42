@@ -486,7 +486,7 @@ window.onload = function() {
           g.fillStyle = "rgba(255, 255, 255, " + fadeAmount + ")";
           g.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
 
-          fadeAmount -= 0.04;
+          fadeAmount -= 0.01;
           animationRequest = window.requestAnimationFrame(updateGameScreen);
         } else {
           animationRequest = null;
