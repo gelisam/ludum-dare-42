@@ -968,10 +968,10 @@ window.onload = function() {
             g.drawImage(helpImage, 768, 390);
 
             if (spacebarsUsed == rabbitImages.length - 1) {
-              g.drawImage(spaceDisabledImage, 1034, 628);
+              g.drawImage(spaceDisabledImage, 1034, 517);
             }
             if (lastCollisions.length !== 0) {
-              g.drawImage(enterDisabledImage, 1169, 475);
+              g.drawImage(enterDisabledImage, 1137, 577);
             }
 
             for(var i=0; i<visibleItemCount; i++) {
