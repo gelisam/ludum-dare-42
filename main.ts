@@ -717,6 +717,7 @@ window.onload = function() {
           else if (event.key === "Tab") selectAnotherItem();
           else if (event.key === "r") restartLevel();
           else if (event.key === "R") attachGameScreen(titleScreen);
+          else if (event.key === "C") spacebarsUsed = 0; // cheat!
           else {
             handled = false;
             //console.log(event.key);
