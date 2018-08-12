@@ -443,7 +443,7 @@ window.onload = function() {
   // the first level has number 1
   function attachLevel(levelNumber: number, spacebarsUsed: number) {
     // the first level is at index 0
-    const level: Level | null = levels[levelNumber-1];
+    const level: Level | null = levels[levelNumber-1] || null;
 
     if (level) {
       attachGameScreen(makeLevelScreen(levelNumber, level, spacebarsUsed));
@@ -621,7 +621,7 @@ window.onload = function() {
         }
 
         function findNextItem(): RSprite | null {
-          return items[visibleItemCount];
+          return items[visibleItemCount] || null;
         }
 
         function addNextItem() {
@@ -796,7 +796,7 @@ window.onload = function() {
               drawCenteredImage(g, currentResponseImage, 1178, 377);
             }
 
-            const helpImage = (lastCollisions.length == 0 && findNextItem() == null) ? movingOnImage : controlsImage;
+            const helpImage = (lastCollisions.length == 0 && findNextItem() === null) ? movingOnImage : controlsImage;
             g.drawImage(helpImage, 768, 390);
 
             if (spacebarsUsed == rabbitImages.length - 1) {
