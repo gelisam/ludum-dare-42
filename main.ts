@@ -703,7 +703,8 @@ window.onload = function() {
           if      (event.key === "Enter" && collisions && collisions.length === 0) addNextItem();
           else if (event.key === " ") giveItemAway();
           else if (event.key === "Tab") selectAnotherItem();
-          else if (event.key.toLowerCase() === "r") restartLevel();
+          else if (event.key === "r") restartLevel();
+          else if (event.key === "R") attachGameScreen(titleScreen);
           else {
             handled = false;
             //console.log(event.key);
