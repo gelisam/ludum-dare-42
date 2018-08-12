@@ -94,6 +94,7 @@ function drawImageInsideBox(g: CanvasRenderingContext2D, img: HTMLImageElement, 
 // PixelMap //
 //////////////
 
+type Point = {x: number, y: number};
 type PixelMap = (x: number, y: number) => boolean;
 
 function makePixelMapFromCanvas(canvas: HTMLCanvasElement) {
@@ -113,28 +114,24 @@ function pixelMapContainsPoint(pixelMap: PixelMap, x: number, y: number): boolea
   return pixelMap(x, y);
 }
 
-function pixelMapCollidesWithBounds(pixelMap: PixelMap, left: number, top: number, right: number, bottom: number): boolean {
+function pixelMapIntersectsWithBounds(pixelMap: PixelMap, left: number, top: number, right: number, bottom: number, callback: (x: number, y: number) => void) {
   for(var x=left; x<right; x++) {
     for(var y=top; y<bottom; y++) {
       if (pixelMap(x, y)) {
-        return true;
+        callback(x, y);
       }
     }
   }
-
-  return false;
 }
 
-function pixelMapsCollideInsideBounds(pixelMap1: PixelMap, pixelMap2: PixelMap, left: number, top: number, right: number, bottom: number): boolean {
+function pixelMapsIntersectInsideBounds(pixelMap1: PixelMap, pixelMap2: PixelMap, left: number, top: number, right: number, bottom: number, callback: (x: number, y: number) => void) {
   for(var x=left; x<right; x++) {
     for(var y=top; y<bottom; y++) {
       if (pixelMap1(x, y) && pixelMap2(x, y)) {
-        return true;
+        callback(x, y);
       }
     }
   }
-
-  return false;
 }
 
 
@@ -155,7 +152,7 @@ function spritePixelMap(sprite: Sprite): PixelMap {
   return (x: number, y: number) => sprite.localPixelMap(x - sprite.x, y - sprite.y);
 }
 
-function spriteContainsPoint(sprite: Sprite, x: number, y: number) {
+function spriteContainsPoint(sprite: Sprite, x: number, y: number): boolean {
   if (x < sprite.x || x >= sprite.x + sprite.width || y < sprite.y || y >= sprite.y + sprite.height) {
     return false;
   } else {
@@ -163,44 +160,43 @@ function spriteContainsPoint(sprite: Sprite, x: number, y: number) {
   }
 }
 
-function spriteCollidesWithBounds(sprite: Sprite, left: number, top: number, right: number, bottom: number): boolean {
+function spriteIntersectsWithBounds(sprite: Sprite, left: number, top: number, right: number, bottom: number, callback: (x: number, y: number) => void) {
   const spriteLeft   = sprite.x;
   const spriteTop    = sprite.y;
   const spriteRight  = sprite.x + sprite.width;
   const spriteBottom = sprite.y + sprite.height;
 
   if (spriteLeft > right || spriteRight < left || spriteTop > bottom || spriteBottom < top) {
-    return false;
+    return;
   } else {
-    return pixelMapCollidesWithBounds(
+    return pixelMapIntersectsWithBounds(
       spritePixelMap(sprite),
       Math.max(spriteLeft,   left),
       Math.max(spriteTop,    top),
       Math.min(spriteRight,  right),
-      Math.min(spriteBottom, bottom)
+      Math.min(spriteBottom, bottom),
+      callback
     );
   }
 }
 
-function spriteFitsInsideBounds(sprite: Sprite, left: number, top: number, right: number, bottom: number): boolean {
+function spriteIntersectsOutsideBounds(sprite: Sprite, left: number, top: number, right: number, bottom: number, callback: (x: number, y: number) => void) {
   const spriteLeft   = sprite.x;
   const spriteTop    = sprite.y;
   const spriteRight  = sprite.x + sprite.width;
   const spriteBottom = sprite.y + sprite.height;
 
   if (spriteLeft > left && spriteTop > top && spriteLeft < left && spriteBottom < bottom) {
-    return true;
+    return;
   } else {
-    return !(
-      spriteCollidesWithBounds(sprite, negativeInfinity, negativeInfinity, left, positiveInfinity) ||
-      spriteCollidesWithBounds(sprite, negativeInfinity, negativeInfinity, positiveInfinity, top) ||
-      spriteCollidesWithBounds(sprite, right, negativeInfinity, positiveInfinity, positiveInfinity) ||
-      spriteCollidesWithBounds(sprite, negativeInfinity, bottom, positiveInfinity, positiveInfinity)
-    );
+    spriteIntersectsWithBounds(sprite, negativeInfinity, negativeInfinity, left, positiveInfinity, callback);
+    spriteIntersectsWithBounds(sprite, negativeInfinity, negativeInfinity, positiveInfinity, top, callback);
+    spriteIntersectsWithBounds(sprite, right, negativeInfinity, positiveInfinity, positiveInfinity, callback);
+    spriteIntersectsWithBounds(sprite, negativeInfinity, bottom, positiveInfinity, positiveInfinity, callback);
   }
 }
 
-function spritesCollide(sprite1: Sprite, sprite2: Sprite): boolean {
+function spritesIntersect(sprite1: Sprite, sprite2: Sprite, callback: (x: number, y: number) => void) {
   const sprite1Left   = sprite1.x;
   const sprite1Top    = sprite1.y;
   const sprite1Right  = sprite1.x + sprite1.width;
@@ -213,15 +209,16 @@ function spritesCollide(sprite1: Sprite, sprite2: Sprite): boolean {
 
 
   if (sprite1Left > sprite2Right || sprite1Right < sprite2Left || sprite1Top > sprite2Bottom || sprite1Bottom < sprite2Top) {
-    return false;
+    return;
   } else {
-    return pixelMapsCollideInsideBounds(
+    pixelMapsIntersectInsideBounds(
       spritePixelMap(sprite1),
       spritePixelMap(sprite2),
       Math.max(sprite1Left,   sprite2Left),
       Math.max(sprite1Top,    sprite2Top),
       Math.min(sprite1Right,  sprite2Right),
-      Math.min(sprite1Bottom, sprite2Bottom)
+      Math.min(sprite1Bottom, sprite2Bottom),
+      callback
     );
   }
 }
@@ -284,25 +281,26 @@ function rspriteContainsPoint(rsprite: RSprite, x: number, y: number) {
   }
 }
 
-function rspriteCollidesWithBounds(rsprite: RSprite, left: number, top: number, right: number, bottom: number): boolean {
-  return spriteCollidesWithBounds(rspriteSprite(rsprite), left, top, right, bottom);
+function rspriteIntersectsWithBounds(rsprite: RSprite, left: number, top: number, right: number, bottom: number, callback: (x: number, y: number) => void) {
+  spriteIntersectsWithBounds(rspriteSprite(rsprite), left, top, right, bottom, callback);
 }
 
-function rspriteFitsInsideBounds(rsprite: RSprite, left: number, top: number, right: number, bottom: number): boolean {
-  return spriteFitsInsideBounds(rspriteSprite(rsprite), left, top, right, bottom);
+function rspriteIntersectsOutsideBounds(rsprite: RSprite, left: number, top: number, right: number, bottom: number, callback: (x: number, y: number) => void) {
+  spriteIntersectsOutsideBounds(rspriteSprite(rsprite), left, top, right, bottom, callback);
 }
 
-function rspritesCollide(rsprite1: RSprite, rsprite2: RSprite): boolean {
+function rspritesIntersect(rsprite1: RSprite, rsprite2: RSprite, callback: (x: number, y: number) => void) {
   const dx = rsprite2.x - rsprite1.x;
   const dy = rsprite2.y - rsprite1.y;
   const r = rsprite1.radius + rsprite2.radius;
 
   if (dx*dx + dy*dy > r*r) {
-    return false;
+    return;
   } else {
-    return spritesCollide(
+    spritesIntersect(
       rspriteSprite(rsprite1),
-      rspriteSprite(rsprite2)
+      rspriteSprite(rsprite2),
+      callback
     );
   }
 }
@@ -427,6 +425,7 @@ window.onload = function() {
         g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
         g.font = "30px Arial";
         g.textAlign = "center";
+        g.fillStyle="#000000";
         g.fillText("Loading...", gameCanvas.width / 2, gameCanvas.height / 2);
       }
     };
@@ -479,6 +478,82 @@ window.onload = function() {
           itemX: number,
           itemY: number
         } | null = null;
+        var collisions: Point[] | null = null;
+        var collisionFinder: number | null = null;
+
+        function clearCollisions() {
+          if (collisionFinder != null) clearTimeout(collisionFinder);
+        }
+
+        function resetCollisions() {
+          collisions = null;
+
+          clearCollisions();
+          collisionFinder = setTimeout(findCollisions);
+        }
+
+        //function anyItemsCollide(): boolean {
+        //  for(var i=0; i<visibleItemCount; i++) {
+        //    const itemI = items[i];
+        //    if (itemI) {
+        //      if (!rspriteFitsInsideBounds(itemI, 54, 54, 725, 725)) {
+        //        return true;
+        //      }
+        //
+        //      for(var j=i+1; j<visibleItemCount; j++) {
+        //        const itemJ = items[j];
+        //        if (itemJ) {
+        //          if (rspritesCollide(itemI, itemJ)) {
+        //            return true;
+        //          }
+        //        }
+        //      }
+        //    }
+        //  }
+        //
+        //  return false;
+        //}
+
+        // a version of anyItemsCollide which repeatedly calls setTimeout so we
+        // don't block the UI, and also finds all the collision points, not just
+        // whether there is a collision.
+        function findCollisions() {
+          var collisionPoints: Point[] = [];
+
+          function addCollisionPoint(x: number, y: number) {
+            collisionPoints.push({x,y});
+          }
+
+          function outerLoop(i: number) {
+            if (i < visibleItemCount) {
+              const itemI = items[i];
+              if (itemI) {
+                rspriteIntersectsOutsideBounds(itemI, 54, 54, 725, 725, addCollisionPoint);
+                collisionFinder = setTimeout(() => innerLoop(i, itemI, i+1));
+                return;
+              }
+            }
+
+            collisions = collisionPoints;
+            collisionFinder = null;
+            updateGameScreen();
+          }
+
+          function innerLoop(i: number, itemI: RSprite, j: number) {
+            if (j < visibleItemCount) {
+              const itemJ = items[j];
+              if (itemJ) {
+                rspritesIntersect(itemI, itemJ, addCollisionPoint);
+                collisionFinder = setTimeout(() => innerLoop(i, itemI, j+1));
+                return;
+              }
+            }
+
+            collisionFinder = setTimeout(() => outerLoop(i+1));
+          }
+
+          collisionFinder = setTimeout(() => outerLoop(0));
+        }
 
         function giveItemAway() {
           if (spacebarsUsed < rabbitImages.length-1) {
@@ -514,6 +589,8 @@ window.onload = function() {
 
             item.x = 390;
             item.y = 373;
+
+            resetCollisions();
           } else {
             attachNextLevel();
           }
@@ -565,6 +642,7 @@ window.onload = function() {
             picked.item.x = mouseX - picked.mouseX + picked.itemX;
             picked.item.y = mouseY - picked.mouseY + picked.itemY;
 
+            resetCollisions();
             updateGameScreen();
           } else {
             hoverOverItem(event);
@@ -583,7 +661,7 @@ window.onload = function() {
           else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") item.x += event.shiftKey ? 8 : 1;
           else if (event.key === "PageUp"     || event.key.toLowerCase() === "q") item.rotation -= event.shiftKey ? 40 : 1;
           else if (event.key === "PageDown"   || event.key.toLowerCase() === "e") item.rotation += event.shiftKey ? 40 : 1;
-          else if (event.key === "Enter" && !anyItemsCollide()) addNextItem();
+          else if (event.key === "Enter" && collisions && collisions.length === 0) addNextItem();
           else if (event.key === " ") giveItemAway();
           else if (event.key === "Tab") {
             selectAnotherItem();
@@ -596,9 +674,9 @@ window.onload = function() {
           if (handled) {
             event.stopPropagation();
             event.preventDefault();
+            resetCollisions();
+            updateGameScreen();
           }
-
-          updateGameScreen();
         }
 
         function releaseItem(event: MouseEvent) {
@@ -606,28 +684,6 @@ window.onload = function() {
             gameCanvas.setAttribute("style", "cursor: move; cursor: grab; cursor:-moz-grab; cursor:-webkit-grab;");
             picked = null;
           }
-        }
-
-        function anyItemsCollide(): boolean {
-          for(var i=0; i<visibleItemCount; i++) {
-            const itemI = items[i];
-            if (itemI) {
-              if (!rspriteFitsInsideBounds(itemI, 54, 54, 725, 725)) {
-                return true;
-              }
-
-              for(var j=i+1; j<visibleItemCount; j++) {
-                const itemJ = items[j];
-                if (itemJ) {
-                  if (rspritesCollide(itemI, itemJ)) {
-                    return true;
-                  }
-                }
-              }
-            }
-          }
-
-          return false;
         }
 
         return {
@@ -645,6 +701,7 @@ window.onload = function() {
             gameCanvas.removeEventListener("mousemove", dragItem);
             gameCanvas.removeEventListener("mouseup", releaseItem);
             window.removeEventListener("keydown", moveItem);
+            clearCollisions();
           },
           draw: () => {
             g.drawImage(background, 0, 0);
@@ -657,15 +714,13 @@ window.onload = function() {
             const rabbitImage = rabbitImages[spacebarsUsed];
             g.drawImage(rabbitImage, 1050, 143);
 
-            const collision = anyItemsCollide();
-
-            const helpImage = (collision || findNextItem()) ? controlsImage : movingOnImage;
+            const helpImage = (collisions && collisions.length === 0 && findNextItem() === null) ? movingOnImage : controlsImage;
             g.drawImage(helpImage, 768, 390);
 
             if (spacebarsUsed == rabbitImages.length - 1) {
               g.drawImage(spaceDisabledImage, 1034, 628);
             }
-            if (collision) {
+            if (collisions === null || collisions.length !== 0) {
               g.drawImage(enterDisabledImage, 1169, 475);
             }
 
@@ -678,6 +733,13 @@ window.onload = function() {
 
             const item = items[currentItemNumber];
             if (item) drawRSprite(item);
+
+            if (collisions !== null) {
+              g.fillStyle="#FF0000C0";
+              collisions.forEach(({x,y}) => {
+                g.fillRect(x, y, 1, 1);
+              });
+            }
           }
         };
       }
