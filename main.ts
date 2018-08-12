@@ -770,7 +770,6 @@ window.onload = function() {
             window.addEventListener("keyup", keyUp);
 
             addNextItem();
-            addNextItem();
           },
           detach: () => {
             gameCanvas.removeEventListener("mousedown", pickItem);
