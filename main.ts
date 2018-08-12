@@ -7,6 +7,14 @@ function error<A>(msg: string): A {
 }
 
 
+//////////////
+// infinity //
+//////////////
+
+const positiveInfinity = 1.0 / 0.0;
+const negativeInfinity = -positiveInfinity;
+
+
 ////////////
 // Canvas //
 ////////////
@@ -168,6 +176,24 @@ function spriteCollidesWithBounds(sprite: Sprite, left: number, top: number, rig
       Math.max(spriteTop,    top),
       Math.min(spriteRight,  right),
       Math.min(spriteBottom, bottom)
+    );
+  }
+}
+
+function spriteFitsInsideBounds(sprite: Sprite, left: number, top: number, right: number, bottom: number): boolean {
+  const spriteLeft   = sprite.x;
+  const spriteTop    = sprite.y;
+  const spriteRight  = sprite.x + sprite.width;
+  const spriteBottom = sprite.y + sprite.height;
+
+  if (spriteLeft > left && spriteTop > top && spriteLeft < left && spriteBottom < bottom) {
+    return true;
+  } else {
+    return !(
+      spriteCollidesWithBounds(sprite, negativeInfinity, negativeInfinity, left, positiveInfinity) ||
+      spriteCollidesWithBounds(sprite, negativeInfinity, negativeInfinity, positiveInfinity, top) ||
+      spriteCollidesWithBounds(sprite, right, negativeInfinity, positiveInfinity, positiveInfinity) ||
+      spriteCollidesWithBounds(sprite, negativeInfinity, bottom, positiveInfinity, positiveInfinity)
     );
   }
 }
@@ -491,6 +517,10 @@ window.onload = function() {
           for(var i=0; i<visibleSpriteCount; i++) {
             const spriteI = sprites[i];
             if (spriteI) {
+              if (!spriteFitsInsideBounds(spriteI, 54, 54, 725, 725)) {
+                return true;
+              }
+
               for(var j=i+1; j<visibleSpriteCount; j++) {
                 const spriteJ = sprites[j];
                 if (spriteJ) {
