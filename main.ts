@@ -573,7 +573,6 @@ window.onload = function() {
         const enterDisabledImage = getPreloadedImage("images/enterDisabled.png");
         const spaceDisabledImage = getPreloadedImage("images/spaceDisabled.png");
 
-        var t: number = 0;
         var animationRequest: number | null = null;
 
         var items: (RSprite | null)[] = loadedSprites.map(makeRSpriteFromSprite);
@@ -603,6 +602,26 @@ window.onload = function() {
         var pressingA = false;
         var pressingS = false;
         var pressingD = false;
+
+        function playAnimation(dt: number, callback: (t: number) => void) {
+          var t = 0;
+
+          function nextFrame() {
+            callback(t);
+            updateGameScreen();
+
+            if (t < 1) {
+              t += dt;
+
+              animationRequest = window.requestAnimationFrame(nextFrame);
+            } else {
+              updateGameScreen();
+              animationRequest = null;
+            }
+          }
+
+          animationRequest = window.requestAnimationFrame(nextFrame);
+        }
 
         function restartLevel() {
           attachLevel(levelNumber, initialSpacebarsUsed);
@@ -743,34 +762,21 @@ window.onload = function() {
 
             item.x = 390;
             item.y = -item.localSprite.height;
+            const h = 373 + item.localSprite.height;
 
             lastCollisions = [];
 
-            t = 0;
-            animationRequest = window.requestAnimationFrame(animateFallingItem);
+            playAnimation(0.02, (t: number) => {
+              if (t < 1) {
+                item.y = 373 - fallDownBouncing(t) * h;
+                t += 0.02;
+              } else {
+                item.y = 373;
+                resetCollisions();
+              }
+            });
           } else {
             attachLevel(levelNumber+1, spacebarsUsed);
-          }
-        }
-
-        function animateFallingItem() {
-          const item = items[currentItemNumber];
-          if (item) {
-            if (t < 1) {
-              item.y = 373 - fallDownBouncing(t) * (373 + item.localSprite.height);
-              t += 0.02;
-
-              updateGameScreen();
-              animationRequest = window.requestAnimationFrame(animateFallingItem);
-            } else {
-              item.y = 373;
-              resetCollisions();
-
-              updateGameScreen();
-              animationRequest = null;
-            }
-          } else {
-            animationRequest = null;
           }
         }
 
