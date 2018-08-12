@@ -737,6 +737,8 @@ window.onload = function() {
                 itemY: item.y
               };
 
+              event.stopPropagation();
+              event.preventDefault();
               return;
             }
           }
@@ -750,6 +752,8 @@ window.onload = function() {
             picked.item.x = mouseX - picked.mouseX + picked.itemX;
             picked.item.y = mouseY - picked.mouseY + picked.itemY;
 
+            event.stopPropagation();
+            event.preventDefault();
             resetCollisions();
             updateGameScreen();
           } else {
