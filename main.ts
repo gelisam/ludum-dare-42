@@ -505,8 +505,9 @@ window.onload = function() {
         }
 
         function addNextItem() {
-          const item = findNextItem();
+          gameCanvas.setAttribute("style", "cursor: default;");
 
+          const item = findNextItem();
           if (item) {
             visibleItemCount++;
             currentItemNumber = visibleItemCount - 1;
