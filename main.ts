@@ -669,7 +669,7 @@ window.onload = function() {
         }
 
         function selectAnotherItem() {
-          for(var i=currentItemNumber; i<visibleItemCount; i++) {
+          for(var i=currentItemNumber+1; i<visibleItemCount; i++) {
             if (items[i]) {
               currentItemNumber = i;
               return;
@@ -769,6 +769,7 @@ window.onload = function() {
           else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") pressingA = true;
           else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") pressingS = true;
           else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") pressingD = true;
+          else if (event.key === "Tab") selectAnotherItem();
           else {
             handled = false;
             //console.log(event.key);
@@ -800,7 +801,6 @@ window.onload = function() {
           else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") pressingD = false;
           else if (event.key === "Enter" && collisions && collisions.length === 0) addNextItem();
           else if (event.key === " ") giveItemAway();
-          else if (event.key === "Tab") selectAnotherItem();
           else if (event.key === "r") restartLevel();
           else if (event.key === "R") attachGameScreen(titleScreen);
           else if (event.key === "C") spacebarsUsed = 0; // cheat!
