@@ -491,6 +491,13 @@ window.onload = function() {
         var lastCollisions: Point[] = [];
         var collisionTimeout: number | null = null;
 
+        var pressingQ = false;
+        var pressingW = false;
+        var pressingE = false;
+        var pressingA = false;
+        var pressingS = false;
+        var pressingD = false;
+
         function restartLevel() {
           attachLevel(levelNumber, initialSpacebarsUsed);
         }
@@ -684,24 +691,31 @@ window.onload = function() {
           }
         }
 
-        function moveItem(event: KeyboardEvent) {
+        function keyDown(event: KeyboardEvent) {
           const item = items[currentItemNumber];
           if (!item) return;
 
           var handled = true;
 
-          if      (event.key === "ArrowUp"    || event.key.toLowerCase() === "w") item.y -= event.shiftKey ? 15 : 1;
-          else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") item.x -= event.shiftKey ? 15 : 1;
-          else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") item.y += event.shiftKey ? 15 : 1;
-          else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") item.x += event.shiftKey ? 15 : 1;
-          else if (event.key === "PageUp"     || event.key.toLowerCase() === "q") item.rotation -= event.shiftKey ? 10 : 1;
-          else if (event.key === "PageDown"   || event.key.toLowerCase() === "e") item.rotation += event.shiftKey ? 10 : 1;
+          if      (event.key === "PageUp"     || event.key.toLowerCase() === "q") pressingQ = true;
+          else if (event.key === "ArrowUp"    || event.key.toLowerCase() === "w") pressingW = true;
+          else if (event.key === "PageDown"   || event.key.toLowerCase() === "e") pressingE = true;
+          else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") pressingA = true;
+          else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") pressingS = true;
+          else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") pressingD = true;
           else {
             handled = false;
             //console.log(event.key);
           }
 
           if (handled) {
+            if (pressingW) item.y -= event.shiftKey ? 15 : 1;
+            if (pressingA) item.x -= event.shiftKey ? 15 : 1;
+            if (pressingS) item.y += event.shiftKey ? 15 : 1;
+            if (pressingD) item.x += event.shiftKey ? 15 : 1;
+            if (pressingQ) item.rotation -= event.shiftKey ? 10 : 1;
+            if (pressingE) item.rotation += event.shiftKey ? 10 : 1;
+
             event.stopPropagation();
             event.preventDefault();
             resetCollisions();
@@ -709,10 +723,16 @@ window.onload = function() {
           }
         }
 
-        function action(event: KeyboardEvent) {
+        function keyUp(event: KeyboardEvent) {
           var handled = true;
 
-          if      (event.key === "Enter" && collisions && collisions.length === 0) addNextItem();
+          if      (event.key === "PageUp"     || event.key.toLowerCase() === "q") pressingQ = false;
+          else if (event.key === "ArrowUp"    || event.key.toLowerCase() === "w") pressingW = false;
+          else if (event.key === "PageDown"   || event.key.toLowerCase() === "e") pressingE = false;
+          else if (event.key === "ArrowLeft"  || event.key.toLowerCase() === "a") pressingA = false;
+          else if (event.key === "ArrowDown"  || event.key.toLowerCase() === "s") pressingS = false;
+          else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") pressingD = false;
+          else if (event.key === "Enter" && collisions && collisions.length === 0) addNextItem();
           else if (event.key === " ") giveItemAway();
           else if (event.key === "Tab") selectAnotherItem();
           else if (event.key === "r") restartLevel();
@@ -743,8 +763,8 @@ window.onload = function() {
             gameCanvas.addEventListener("mousedown", pickItem);
             gameCanvas.addEventListener("mousemove", dragItem);
             gameCanvas.addEventListener("mouseup", releaseItem);
-            window.addEventListener("keydown", moveItem);
-            window.addEventListener("keyup", action);
+            window.addEventListener("keydown", keyDown);
+            window.addEventListener("keyup", keyUp);
 
             addNextItem();
             addNextItem();
@@ -753,8 +773,8 @@ window.onload = function() {
             gameCanvas.removeEventListener("mousedown", pickItem);
             gameCanvas.removeEventListener("mousemove", dragItem);
             gameCanvas.removeEventListener("mouseup", releaseItem);
-            window.removeEventListener("keydown", moveItem);
-            window.removeEventListener("keyup", action);
+            window.removeEventListener("keydown", keyDown);
+            window.removeEventListener("keyup", keyUp);
 
             if (collisionTimeout !== null) clearTimeout(collisionTimeout);
             if (responseTimeout  !== null) clearTimeout(responseTimeout);
