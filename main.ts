@@ -377,8 +377,6 @@ window.onload = function() {
 
           if (!sprites[currentSpriteNumber]) {
             selectAnotherSprite();
-          } else {
-            console.log(currentSpriteNumber);
           }
         }
 
@@ -401,7 +399,6 @@ window.onload = function() {
         }
 
         function hoverOverSprite(event: MouseEvent) {
-          console.log("hovering");
           const mouseX = event.offsetX;
           const mouseY = event.offsetY;
 
@@ -466,7 +463,6 @@ window.onload = function() {
           else if (event.key === "Enter" && !anySpritesCollide()) addNextSprite();
           else if (event.key === " ") giveSpriteAway();
           else if (event.key === "Tab") {
-            console.log("handling tab");
             selectAnotherSprite();
           }
           else {
