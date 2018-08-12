@@ -28,6 +28,12 @@ function getCanvasContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
 // Promises //
 //////////////
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 const sequencePromises : <A,B>(loadB: (input: A) => Promise<B>) => (inputs: A[]) => Promise<B[]>
                        = <A,B>(loadB: (input: A) => Promise<B>) => (inputs: A[]) =>
 {
@@ -413,24 +419,78 @@ window.onload = function() {
   }
 
 
+  //////////////////////
+  // fading-in effect //
+  //////////////////////
+
+  function fadeInto(gameScreen: GameScreen): GameScreen {
+    var fadeAmount = 1.0;
+    var animationRequest: number | null = null;
+
+    return {
+      attach: () => {
+        fadeAmount = 1.0;
+        gameScreen.attach();
+      },
+      detach: () => {
+        gameScreen.detach();
+        if (animationRequest !== null) window.cancelAnimationFrame(animationRequest);
+      },
+      draw: () => {
+        gameScreen.draw();
+
+        if (fadeAmount > 0) {
+          g.fillStyle = "rgba(255, 255, 255, " + fadeAmount + ")";
+          g.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+          fadeAmount -= 0.05;
+          animationRequest = window.requestAnimationFrame(updateGameScreen);
+        } else {
+          animationRequest = null;
+        }
+      }
+    };
+  }
+
+
   ////////////////////
   // loading screen //
   ////////////////////
 
   function makeLoadingScreen<A>(makePromise: () => Promise<A>, makeNextScreen: (result: A) => GameScreen): GameScreen {
+    var fadingOut = true;
+    var animationRequest: number | null = null;
+
     return {
       attach: () => {
-        makePromise().then(result => {
-          attachGameScreen(makeNextScreen(result));
+        fadingOut = true;
+        Promise.all(
+          [
+            delay(500).then(() => {
+              fadingOut = false;
+            }),
+            makePromise()
+          ]
+        ).then(([_, result]) => {
+          attachGameScreen(fadeInto(makeNextScreen(result)));
         });
       },
-      detach: () => {},
+      detach: () => {
+        if (animationRequest !== null) window.cancelAnimationFrame(animationRequest);
+      },
       draw: () => {
-        g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-        g.font = "30px Arial";
-        g.textAlign = "center";
-        g.fillStyle="#000000";
-        g.fillText("Loading...", gameCanvas.width / 2, gameCanvas.height / 2);
+        if (fadingOut) {
+          g.fillStyle = "#FFFFFF20";
+          g.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+          animationRequest = window.requestAnimationFrame(updateGameScreen);
+        } else {
+          g.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+          g.font = "30px Arial";
+          g.textAlign = "center";
+          g.fillStyle = "#000000";
+          g.fillText("Loading...", gameCanvas.width / 2, gameCanvas.height / 2);
+          animationRequest = null;
+        }
       }
     };
   }
@@ -819,7 +879,7 @@ window.onload = function() {
             const item = items[currentItemNumber];
             if (item) drawRSprite(item);
 
-            g.fillStyle="#FF0000C0";
+            g.fillStyle = "#FF0000C0";
             lastCollisions.forEach(({x,y}) => {
               g.fillRect(x, y, 1, 1);
             });
