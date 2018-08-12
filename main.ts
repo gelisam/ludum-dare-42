@@ -530,6 +530,13 @@ window.onload = function() {
         function findCollisions() {
           var collisionPoints: Point[] = [];
 
+          function displayCollisionPoints() {
+            collisions = collisionPoints;
+            lastCollisions = collisionPoints;
+            collisionTimeout = null;
+            updateGameScreen();
+          }
+
           function addCollisionPoint(x: number, y: number) {
             collisionPoints.push({x,y});
           }
@@ -544,10 +551,7 @@ window.onload = function() {
               }
             }
 
-            collisions = collisionPoints;
-            lastCollisions = collisionPoints;
-            collisionTimeout = null;
-            updateGameScreen();
+            displayCollisionPoints();
           }
 
           function innerLoop(i: number, itemI: RSprite, j: number) {
@@ -559,6 +563,16 @@ window.onload = function() {
             }
 
             collisionTimeout = setTimeout(() => outerLoop(i+1));
+          }
+
+          for(var i=0; i<visibleItemCount; i++) {
+            const itemI = items[i];
+            if (itemI && itemI.localSprite.width > 670 || itemI.localSprite.height > 670) {
+              // this is a joke item, no need to display the collisions
+              collisionPoints.push({x: -1, y: -1});
+              displayCollisionPoints();
+              return;
+            }
           }
 
           collisionTimeout = setTimeout(() => outerLoop(0));
