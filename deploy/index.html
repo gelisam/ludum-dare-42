@@ -12,6 +12,18 @@
         display: block;
       }
 
+      #preloadingScreen {
+        display: block;
+        width: 1366px;
+        height: 768px;
+        text-align: center;
+        vertical-align: middle;
+        line-height: 768px;
+        margin-left: auto;
+        margin-right: auto;
+        border: 1px solid black;
+      }
+
       audio {
         position: absolute;
         bottom: 0px;
@@ -26,6 +38,7 @@
     <script src="js/main.js"></script>
   </head>
   <body>
+    <div id="preloadingScreen">Loading...</div>
     <center><canvas id="gameCanvas" width="1366" height="768"></canvas></center>
     <!--<audio src="audio/music.ogg" autoplay="true" controls="true" loop="true"></audio>-->
     <div id="preloader">

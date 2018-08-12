@@ -805,5 +805,13 @@ window.onload = function() {
   // main //
   //////////
 
+  const preloadingScreen = document.getElementById("preloadingScreen");
+  if (preloadingScreen) {
+    const parentNode = preloadingScreen.parentNode;
+    if (parentNode) {
+      parentNode.removeChild(preloadingScreen);
+    }
+  }
+
   attachGameScreen(titleScreen);
 };
