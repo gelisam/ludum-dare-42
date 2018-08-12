@@ -718,6 +718,9 @@ window.onload = function() {
         }
 
         function giveItemAway() {
+          const item = items[currentItemNumber];
+          if (!item) return;
+
           currentResponseImage = responseImages[spacebarsUsed];
 
           if (responseRequest !== null) clearTimeout(responseRequest);
@@ -732,8 +735,17 @@ window.onload = function() {
 
           if (spacebarsUsed < rabbitImages.length-1) {
             spacebarsUsed++;
-            items[currentItemNumber] = null;
-            selectAnotherItem();
+
+            const x = item.x;
+            const w = (gameCanvas.width + item.localSprite.width/2) - x;
+            playAnimation(0.02, (t: number) => {
+              if (t < 1) {
+                item.x = x + smoothStart(t) * w;
+              } else {
+                items[currentItemNumber] = null;
+                selectAnotherItem();
+              }
+            });
           }
         }
 
@@ -765,8 +777,8 @@ window.onload = function() {
             currentItemNumber = visibleItemCount - 1;
 
             item.x = 390;
-            item.y = -item.localSprite.height;
-            const h = 373 + item.localSprite.height;
+            item.y = -item.localSprite.height / 2;
+            const h = 373 + item.localSprite.height / 2;
 
             lastCollisions = [];
 
