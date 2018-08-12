@@ -345,8 +345,10 @@ window.onload = function() {
       ),
       ([background, loadedSprites]) => {
         const rabbitImages = [1,2,3,4].map(i => getPreloadedImage(`images/rabbit${i}.png`));
-        const conflictImage = getPreloadedImage("images/controls.png");
+        const controlsImage = getPreloadedImage("images/controls.png");
         const movingOnImage = getPreloadedImage("images/controlsNext.png");
+        const enterDisabledImage = getPreloadedImage("images/enterDisabled.png");
+        const spaceDisabledImage = getPreloadedImage("images/spaceDisabled.png");
 
         var sprites: (Sprite | null)[] = loadedSprites;
         var spacebarsUsed = 0;
@@ -522,13 +524,6 @@ window.onload = function() {
           draw: () => {
             g.drawImage(background, 0, 0);
 
-            for(var i=0; i<visibleSpriteCount; i++) {
-              const sprite = sprites[i];
-              if (sprite) {
-                drawSprite(sprite);
-              }
-            }
-
             const nextSprite: Sprite | null = findNextSprite();
             if (nextSprite) {
               drawImageInsideBox(g, nextSprite.image, 778, 202, 240, 155);
@@ -538,8 +533,23 @@ window.onload = function() {
             g.drawImage(rabbitImage, 1050, 143);
 
             const collision = anySpritesCollide();
-            const controlImage = collision ? conflictImage : movingOnImage;
-            g.drawImage(controlImage, 768, 390);
+
+            const helpImage = (collision || findNextSprite()) ? controlsImage : movingOnImage;
+            g.drawImage(helpImage, 768, 390);
+
+            if (spacebarsUsed == rabbitImages.length - 1) {
+              g.drawImage(spaceDisabledImage, 1034, 628);
+            }
+            if (collision) {
+              g.drawImage(enterDisabledImage, 1169, 475);
+            }
+
+            for(var i=0; i<visibleSpriteCount; i++) {
+              const sprite = sprites[i];
+              if (sprite) {
+                drawSprite(sprite);
+              }
+            }
           }
         };
       }
