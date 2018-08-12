@@ -52,9 +52,9 @@ function piecewise(pieces: [number, Tween][]): Tween {
 }
 
 const fallDownBouncing: Tween = piecewise([
-  [0.5, falling(smoothStart)],
-  [0.3, scaled(0.2, arch)],
-  [0.2, scaled(0.1, arch)]
+  [0.7, falling(smoothStart)],
+  [0.2, scaled(0.05, arch)],
+  [0.1, scaled(0.01, arch)]
 ]);
 
 
