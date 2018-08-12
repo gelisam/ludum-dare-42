@@ -612,13 +612,17 @@ window.onload = function() {
 
             if (t < 1) {
               t += dt;
-
               animationRequest = window.requestAnimationFrame(nextFrame);
             } else {
-              updateGameScreen();
+              resetCollisions();
               animationRequest = null;
             }
           }
+
+          if (collisionRequest !== null) clearTimeout(collisionRequest);
+          collisionRequest = null;
+
+          lastCollisions = [];
 
           animationRequest = window.requestAnimationFrame(nextFrame);
         }
@@ -769,7 +773,6 @@ window.onload = function() {
             playAnimation(0.02, (t: number) => {
               if (t < 1) {
                 item.y = 373 - fallDownBouncing(t) * h;
-                t += 0.02;
               } else {
                 item.y = 373;
                 resetCollisions();
