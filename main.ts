@@ -545,11 +545,14 @@ window.onload = function() {
             }
 
             for(var i=0; i<visibleSpriteCount; i++) {
-              const sprite = sprites[i];
-              if (sprite) {
-                drawSprite(sprite);
+              if (i != currentSpriteNumber) {
+                const sprite = sprites[i];
+                if (sprite) drawSprite(sprite);
               }
             }
+
+            const sprite = sprites[currentSpriteNumber];
+            if (sprite) drawSprite(sprite);
           }
         };
       }
