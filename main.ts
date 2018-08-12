@@ -77,6 +77,35 @@ function delay(ms: number): Promise<void> {
   });
 }
 
+function loadImage(imageFile: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+
+    img.addEventListener("load", () => {
+      resolve(img)
+    });
+    img.addEventListener("error", () => {
+      reject(new Error("Failed to load image " + imageFile));
+    });
+
+    img.src = imageFile;
+  });
+}
+
+function loadAudio(audioFile: string): Promise<HTMLAudioElement> {
+  return new Promise((resolve, reject) => {
+    const audio = new Audio();
+    audio.addEventListener("loadeddata", () => {
+      resolve(audio);
+    });
+    audio.addEventListener("error", () => {
+      reject(new Error("Failed to load audio file " + audioFile));
+    });
+
+    audio.src = audioFile;
+  });
+}
+
 const sequencePromises : <A,B>(loadB: (input: A) => Promise<B>) => (inputs: A[]) => Promise<B[]>
                        = <A,B>(loadB: (input: A) => Promise<B>) => (inputs: A[]) =>
 {
@@ -101,21 +130,6 @@ function getPreloadedImage(imageFile: string): HTMLImageElement {
   const img = new Image();
   img.src = imageFile;
   return img;
-}
-
-function loadImage(imageFile: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-
-    img.addEventListener("load", () => {
-      resolve(img)
-    });
-    img.addEventListener("error", () => {
-      reject(new Error("Failed to load image " + imageFile));
-    });
-
-    img.src = imageFile;
-  });
 }
 
 function drawScaledCenteredImage(g: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, width: number, height: number) {
@@ -559,13 +573,14 @@ window.onload = function() {
 
   function makeLevelScreen(levelNumber: number, level: Level, initialSpacebarsUsed: number): GameScreen {
     return makeLoadingScreen(
-      () => Promise.all<HTMLImageElement, Sprite[]>(
+      () => Promise.all<HTMLImageElement, Sprite[], HTMLAudioElement[]>(
         [
           loadImage(level.backgroundFile),
-          loadSprites(level.spriteFiles)
+          loadSprites(level.spriteFiles),
+          Promise.all(["audio/success.ogg"].map(loadAudio))
         ]
       ),
-      ([background, loadedSprites]) => {
+      ([background, loadedSprites, [successAudio]]) => {
         const rabbitImages   = [1,2,3,4].map(i => getPreloadedImage(`images/rabbit${i}.png`));
         const responseImages = [1,2,3,4].map(i => getPreloadedImage(`images/give${i}.png`));
         const controlsImage = getPreloadedImage("images/controls.png");
@@ -802,6 +817,7 @@ window.onload = function() {
               }
             });
           } else {
+            successAudio.play();
             attachLevel(levelNumber+1, spacebarsUsed);
           }
         }
