@@ -110,7 +110,7 @@ function makePixelMapFromCanvas(canvas: HTMLCanvasElement) {
     x < width &&
     y >= 0 &&
     y < height &&
-    imageData[ y * width * 4 + x * 4 + 3 ] == 255
+    imageData[ y * width * 4 + x * 4 + 3 ] > 128
   );
 }
 
