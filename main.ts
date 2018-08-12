@@ -15,6 +15,49 @@ const positiveInfinity = 1.0 / 0.0;
 const negativeInfinity = -positiveInfinity;
 
 
+//////////////
+// tweening //
+//////////////
+
+// the normal range for the input and the output is between 0.0 and 1.0
+type Tween = (t: number) => number;
+
+const linear: Tween = (t: number) => t;
+
+const smoothStart: Tween = (t: number) => t*t;
+
+const arch: Tween = (t: number) => t*(1-t)*4;
+
+function falling(tween: Tween): Tween {
+  return (t: number) => 1 - tween(t);
+}
+
+function scaled(s: number, tween: Tween): Tween {
+  return (t: number) => s * tween(t);
+}
+
+function piecewise(pieces: [number, Tween][]): Tween {
+  return (t: number) => {
+    for(var i=0; i<pieces.length; i++) {
+      const [duration, tween] = pieces[i];
+      if (i == pieces.length - 1 || t <= duration) {
+        return tween(t / duration);
+      } else {
+        t -= duration;
+      }
+    }
+
+    return error("unreachable");
+  };
+}
+
+const fallDownBouncing: Tween = piecewise([
+  [0.5, falling(smoothStart)],
+  [0.3, scaled(0.2, arch)],
+  [0.2, scaled(0.1, arch)]
+]);
+
+
 ////////////
 // Canvas //
 ////////////
@@ -530,6 +573,9 @@ window.onload = function() {
         const enterDisabledImage = getPreloadedImage("images/enterDisabled.png");
         const spaceDisabledImage = getPreloadedImage("images/spaceDisabled.png");
 
+        var t: number = 0;
+        var animationRequest: number | null = null;
+
         var items: (RSprite | null)[] = loadedSprites.map(makeRSpriteFromSprite);
         var spacebarsUsed = initialSpacebarsUsed;
 
@@ -696,15 +742,41 @@ window.onload = function() {
             currentItemNumber = visibleItemCount - 1;
 
             item.x = 390;
-            item.y = 373;
+            item.y = -item.localSprite.height;
 
-            resetCollisions();
+            lastCollisions = [];
+
+            t = 0;
+            animationRequest = window.requestAnimationFrame(animateFallingItem);
           } else {
             attachLevel(levelNumber+1, spacebarsUsed);
           }
         }
 
+        function animateFallingItem() {
+          const item = items[currentItemNumber];
+          if (item) {
+            if (t < 1) {
+              item.y = 373 - fallDownBouncing(t) * (373 + item.localSprite.height);
+              t += 0.02;
+
+              updateGameScreen();
+              animationRequest = window.requestAnimationFrame(animateFallingItem);
+            } else {
+              item.y = 373;
+              resetCollisions();
+
+              updateGameScreen();
+              animationRequest = null;
+            }
+          } else {
+            animationRequest = null;
+          }
+        }
+
         function hoverOverItem(event: MouseEvent) {
+          if (animationRequest !== null) return;
+
           const mouseX = event.offsetX;
           const mouseY = event.offsetY;
 
@@ -721,6 +793,8 @@ window.onload = function() {
         }
 
         function pickItem(event: MouseEvent) {
+          if (animationRequest !== null) return;
+
           const mouseX = event.offsetX;
           const mouseY = event.offsetY;
 
@@ -745,6 +819,8 @@ window.onload = function() {
         }
 
         function dragItem(event: MouseEvent) {
+          if (animationRequest !== null) return;
+
           if (picked) {
             const mouseX = event.offsetX;
             const mouseY = event.offsetY;
@@ -762,6 +838,8 @@ window.onload = function() {
         }
 
         function keyDown(event: KeyboardEvent) {
+          if (animationRequest !== null) return;
+
           const item = items[currentItemNumber];
           if (!item) return;
 
@@ -795,6 +873,8 @@ window.onload = function() {
         }
 
         function keyUp(event: KeyboardEvent) {
+          if (animationRequest !== null) return;
+
           var handled = true;
 
           if      (event.key === "PageUp"     || event.key.toLowerCase() === "q") pressingQ = false;
