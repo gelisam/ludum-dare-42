@@ -1206,7 +1206,7 @@ window.onload = function() {
   /////////////////
 
   const goodEndingScreen: GameScreen = makeLoadingScreen(
-    () => loadImage("images/the-end.png"),
+    () => loadImage("images/ending2.png"),
     bg => {
       return {
         attach: () => {},
