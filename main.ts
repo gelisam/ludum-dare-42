@@ -752,7 +752,7 @@ window.onload = function() {
           const item = items[currentItemNumber];
           if (!item) return;
 
-          const isCarrot = item.localSprite.image.src.includes("carrot");
+          const isCarrot = (spacebarsUsed < rabbitImages.length-1) && item.localSprite.image.src.includes("carrot");
 
           currentResponseImage = isCarrot ? carrotResponseImage : responseImages[spacebarsUsed];
 
