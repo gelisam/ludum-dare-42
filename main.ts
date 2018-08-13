@@ -613,6 +613,7 @@ window.onload = function() {
 
         var collisions: Point[] | null = null;
         var lastCollisions: Point[] = [];
+        var lastColliding: {[key: number]: boolean} = {};
         var collisionRequest: number | "disabled" | null = null;
 
         var pressingQ = false;
@@ -696,23 +697,31 @@ window.onload = function() {
         // whether there is a collision.
         function findCollisions() {
           var collisionPoints: Point[] = [];
+          var collidingItems: {[key: number]: boolean} = {};
 
           function displayCollisionPoints() {
             collisions = collisionPoints;
             lastCollisions = collisionPoints;
+            lastColliding = collidingItems;
             collisionRequest = null;
             updateGameScreen();
           }
 
-          function addCollisionPoint(x: number, y: number) {
+          const recordCollision
+            : (collidingIndices: number[]) => (x: number, y: number) => void
+            = (collidingIndices: number[]) => (x: number, y: number) =>
+          {
+            collidingIndices.forEach(i => {
+              collidingItems[i] = true;
+            });
             collisionPoints.push({x,y});
-          }
+          };
 
           function outerLoop(i: number) {
             if (i < visibleItemCount) {
               const itemI = items[i];
               if (itemI) {
-                rspriteIntersectsOutsideBounds(itemI, 54, 54, 725, 725, addCollisionPoint);
+                rspriteIntersectsOutsideBounds(itemI, 54, 54, 725, 725, recordCollision([i]));
                 collisionRequest = setTimeout(() => innerLoop(i, itemI, i+1));
                 return;
               } else {
@@ -727,7 +736,7 @@ window.onload = function() {
           function innerLoop(i: number, itemI: RSprite, j: number) {
             if (j < visibleItemCount) {
               const itemJ = items[j];
-              if (itemJ) rspritesIntersect(itemI, itemJ, addCollisionPoint);
+              if (itemJ) rspritesIntersect(itemI, itemJ, recordCollision([i, j]));
               collisionRequest = setTimeout(() => innerLoop(i, itemI, j+1));
               return;
             }
@@ -1023,13 +1032,28 @@ window.onload = function() {
             for(var i=0; i<visibleItemCount; i++) {
               if (i != currentItemNumber) {
                 const item = items[i];
-                if (item) drawRSprite(item);
+                if (item) {
+                  if (lastColliding[i]) {
+                    g.globalAlpha = 0.5;
+                  } else {
+                    g.globalAlpha = 1.0;
+                  }
+                  drawRSprite(item);
+                }
               }
             }
 
             const item = items[currentItemNumber];
-            if (item) drawRSprite(item);
+            if (item) {
+              if (lastColliding[currentItemNumber]) {
+                g.globalAlpha = 0.5;
+              } else {
+                g.globalAlpha = 1.0;
+              }
+              drawRSprite(item);
+            }
 
+            g.globalAlpha = 1.0;
             g.fillStyle = "#FF0000C0";
             lastCollisions.forEach(({x,y}) => {
               g.fillRect(x, y, 1, 1);
