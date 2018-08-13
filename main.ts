@@ -750,6 +750,8 @@ window.onload = function() {
           const item = items[currentItemNumber];
           if (!item) return;
 
+          const isCarrot = item.localSprite.image.src.includes("carrot");
+
           currentResponseImage = responseImages[spacebarsUsed];
 
           const sound = responseSounds[spacebarsUsed];
@@ -766,7 +768,11 @@ window.onload = function() {
           );
 
           if (spacebarsUsed < rabbitImages.length-1) {
-            spacebarsUsed++;
+            if (isCarrot) {
+              spacebarsUsed = Math.max(0, spacebarsUsed - 1);
+            } else {
+              spacebarsUsed++;
+            }
 
             const x = item.x;
             const w = (gameCanvas.width + item.localSprite.width/2) - x;
