@@ -573,18 +573,20 @@ window.onload = function() {
 
   function makeLevelScreen(levelNumber: number, level: Level, initialSpacebarsUsed: number): GameScreen {
     return makeLoadingScreen(
-      () => Promise.all<HTMLImageElement, Sprite[], HTMLAudioElement, HTMLAudioElement[], HTMLAudioElement[]>(
+      () => Promise.all<HTMLImageElement, Sprite[], HTMLAudioElement, HTMLAudioElement, HTMLAudioElement[], HTMLAudioElement[]>(
         [
           loadImage(level.backgroundFile),
           loadSprites(level.spriteFiles),
           loadSound("audio/success.ogg"),
+          loadSound("audio/carrot.ogg"),
           Promise.all([1,2,3,4].map(i => loadSound(`audio/give${i}.ogg`))),
           Promise.all([1,2,3,4,5,6].map(i => loadSound(`audio/drop${i}.ogg`))),
         ]
       ),
-      ([background, loadedSprites, successSound, responseSounds, dropSounds]) => {
+      ([background, loadedSprites, successSound, carrotResponseSound, responseSounds, dropSounds]) => {
         const rabbitImages   = [1,2,3,4].map(i => getPreloadedImage(`images/rabbit${i}.png`));
         const responseImages = [1,2,3,4].map(i => getPreloadedImage(`images/give${i}.png`));
+        const carrotResponseImage = getPreloadedImage("images/carrotAppreciate.png");
         const controlsImage = getPreloadedImage("images/controls.png");
         const movingOnImage = getPreloadedImage("images/controlsNext.png");
         const enterDisabledImage = getPreloadedImage("images/enterDisabled.png");
@@ -752,9 +754,9 @@ window.onload = function() {
 
           const isCarrot = item.localSprite.image.src.includes("carrot");
 
-          currentResponseImage = responseImages[spacebarsUsed];
+          currentResponseImage = isCarrot ? carrotResponseImage : responseImages[spacebarsUsed];
 
-          const sound = responseSounds[spacebarsUsed];
+          const sound = isCarrot ? carrotResponseSound : responseSounds[spacebarsUsed];
           sound.play();
 
           if (responseRequest !== null) clearTimeout(responseRequest);
