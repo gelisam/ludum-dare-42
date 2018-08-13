@@ -578,7 +578,7 @@ window.onload = function() {
           loadImage(level.backgroundFile),
           loadSprites(level.spriteFiles),
           loadSound("audio/success.ogg"),
-          Promise.all([1,2,3,4].map(i => loadSound(`audio/give${i}.flac`))),
+          Promise.all([1,2,3,4].map(i => loadSound(`audio/give${i}.ogg`))),
           Promise.all([1,2,3,4,5,6].map(i => loadSound(`audio/drop${i}.ogg`))),
         ]
       ),
