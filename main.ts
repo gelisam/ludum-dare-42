@@ -1173,96 +1173,85 @@ window.onload = function() {
   }
 
 
-  ////////////////
-  // bad ending //
-  ////////////////
+  /////////////
+  // endings //
+  /////////////
 
-  const badEndingScreen: GameScreen = makeLoadingScreen(
-    () => Promise.all<HTMLImageElement, Sprite[]>(
-      [
-        loadImage("images/ending1.png"),
-        loadSprites(["images/playAgainButton.png", "images/creditsButton.png"])
-      ]
-    ),
-    ([bg, [playAgainButton, creditsButton]]) => {
-      playAgainButton.x = 50;
-      playAgainButton.y = 620;
-      creditsButton.x = 570;
-      creditsButton.y = 620;
+  function makeEndingScreen(bgFile: string): GameScreen {
+    const endingScreen: GameScreen = makeLoadingScreen(
+      () => Promise.all<HTMLImageElement, Sprite[]>(
+        [
+          loadImage(bgFile),
+          loadSprites(["images/playAgainButton.png", "images/creditsButton.png"])
+        ]
+      ),
+      ([bg, [playAgainButton, creditsButton]]) => {
+        playAgainButton.x = 50;
+        playAgainButton.y = 620;
+        creditsButton.x = 570;
+        creditsButton.y = 620;
 
-      function playAgain() {
-        attachGameScreen(titleScreen);
-      }
-
-      function displayCredits() {
-        attachGameScreen(makeCreditsScreen(badEndingScreen));
-      }
-
-      function hoverOverButton(event: MouseEvent) {
-        const mouseX = event.offsetX;
-        const mouseY = event.offsetY;
-
-        if (spriteContainsPoint(playAgainButton, mouseX, mouseY) || spriteContainsPoint(creditsButton, mouseX, mouseY)) {
-          gameCanvas.setAttribute("style", "cursor: pointer;");
-        } else {
-          gameCanvas.setAttribute("style", "cursor: default;");
+        function playAgain() {
+          attachGameScreen(titleScreen);
         }
-      }
 
-      function clickButton(event: MouseEvent) {
-        const mouseX = event.offsetX;
-        const mouseY = event.offsetY;
-
-        if (spriteContainsPoint(playAgainButton, mouseX, mouseY)) {
-          gameCanvas.setAttribute("style", "cursor: default;");
-          playAgain();
-        } else if (spriteContainsPoint(creditsButton, mouseX, mouseY)) {
-          gameCanvas.setAttribute("style", "cursor: default;");
-          displayCredits();
+        function displayCredits() {
+          attachGameScreen(makeCreditsScreen(endingScreen));
         }
-      }
 
-      function typeButton(event: KeyboardEvent) {
-        if (event.key === "Enter") playAgain();
-      }
+        function hoverOverButton(event: MouseEvent) {
+          const mouseX = event.offsetX;
+          const mouseY = event.offsetY;
 
-      return {
-        attach: () => {
-          gameCanvas.addEventListener("mousemove", hoverOverButton);
-          gameCanvas.addEventListener("mouseup", clickButton);
-          window.addEventListener("keyup", typeButton);
-        },
-        detach: () => {
-          gameCanvas.removeEventListener("mousemove", hoverOverButton);
-          gameCanvas.removeEventListener("mouseup", clickButton);
-          window.removeEventListener("keyup", typeButton);
-        },
-        draw: () => {
-          g.drawImage(bg, 0, 0);
-          drawSprite(playAgainButton);
-          drawSprite(creditsButton);
+          if (spriteContainsPoint(playAgainButton, mouseX, mouseY) || spriteContainsPoint(creditsButton, mouseX, mouseY)) {
+            gameCanvas.setAttribute("style", "cursor: pointer;");
+          } else {
+            gameCanvas.setAttribute("style", "cursor: default;");
+          }
         }
-      };
-    }
-  );
 
+        function clickButton(event: MouseEvent) {
+          const mouseX = event.offsetX;
+          const mouseY = event.offsetY;
 
-  /////////////////
-  // good ending //
-  /////////////////
-
-  const goodEndingScreen: GameScreen = makeLoadingScreen(
-    () => loadImage("images/ending2.png"),
-    bg => {
-      return {
-        attach: () => {},
-        detach: () => {},
-        draw: () => {
-          g.drawImage(bg, 0, 0);
+          if (spriteContainsPoint(playAgainButton, mouseX, mouseY)) {
+            gameCanvas.setAttribute("style", "cursor: default;");
+            playAgain();
+          } else if (spriteContainsPoint(creditsButton, mouseX, mouseY)) {
+            gameCanvas.setAttribute("style", "cursor: default;");
+            displayCredits();
+          }
         }
-      };
-    }
-  );
+
+        function typeButton(event: KeyboardEvent) {
+          if (event.key === "Enter") playAgain();
+        }
+
+        return {
+          attach: () => {
+            gameCanvas.addEventListener("mousemove", hoverOverButton);
+            gameCanvas.addEventListener("mouseup", clickButton);
+            window.addEventListener("keyup", typeButton);
+          },
+          detach: () => {
+            gameCanvas.removeEventListener("mousemove", hoverOverButton);
+            gameCanvas.removeEventListener("mouseup", clickButton);
+            window.removeEventListener("keyup", typeButton);
+          },
+          draw: () => {
+            g.drawImage(bg, 0, 0);
+            drawSprite(playAgainButton);
+            drawSprite(creditsButton);
+          }
+        };
+      }
+    );
+
+    return endingScreen;
+  }
+
+  const badEndingScreen:  GameScreen = makeEndingScreen("images/ending1.png");
+  const goodEndingScreen: GameScreen = makeEndingScreen("images/ending2.png");
 
 
   //////////
