@@ -573,15 +573,16 @@ window.onload = function() {
 
   function makeLevelScreen(levelNumber: number, level: Level, initialSpacebarsUsed: number): GameScreen {
     return makeLoadingScreen(
-      () => Promise.all<HTMLImageElement, Sprite[], HTMLAudioElement, HTMLAudioElement[]>(
+      () => Promise.all<HTMLImageElement, Sprite[], HTMLAudioElement, HTMLAudioElement[], HTMLAudioElement[]>(
         [
           loadImage(level.backgroundFile),
           loadSprites(level.spriteFiles),
           loadSound("audio/success.ogg"),
-          Promise.all([1,2,3,4].map(i => loadSound(`audio/give${i}.flac`)))
+          Promise.all([1,2,3,4].map(i => loadSound(`audio/give${i}.flac`))),
+          Promise.all([1,2,3,4,5,6].map(i => loadSound(`audio/drop${i}.ogg`))),
         ]
       ),
-      ([background, loadedSprites, successSound, responseSounds]) => {
+      ([background, loadedSprites, successSound, responseSounds, dropSounds]) => {
         const rabbitImages   = [1,2,3,4].map(i => getPreloadedImage(`images/rabbit${i}.png`));
         const responseImages = [1,2,3,4].map(i => getPreloadedImage(`images/give${i}.png`));
         const controlsImage = getPreloadedImage("images/controls.png");
@@ -811,9 +812,12 @@ window.onload = function() {
             item.y = -item.localSprite.height / 2;
             const h = 373 + item.localSprite.height / 2;
 
-            lastCollisions = [];
-
+            var sound: HTMLAudioElement | null = dropSounds[Math.floor(Math.random() * dropSounds.length)];
             playAnimation(0.02, (t: number) => {
+              if (t > 0.65) {
+                if (sound) sound.play();
+                sound = null;
+              }
               if (t < 1) {
                 item.y = 373 - fallDownBouncing(t) * h;
               } else {
