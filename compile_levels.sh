@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+mkdir -p deploy/js
+
 # generate something like this:
 #
 #   var levels = [
